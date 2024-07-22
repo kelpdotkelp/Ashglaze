@@ -22,6 +22,7 @@
         make directional light a class that configures appropriate shaders.
 
         unbind left mouse click in fly mode, add erasure functions to inputManager.
+        add zoom on scroll wheel
 
         VBO -> vertices pos, ID, (no EBO)
         VBO -> edges    pos, ID, (EBO?)
@@ -31,7 +32,7 @@
 int initWindowWidth = 800;
 int initWindowHeight = 600;
 
-unsigned int selectedObjectID;
+int selectedObjectID = -1;//-1 maps to no object selected.
 bool isFly = false;
 
 void mainRender(bool renderIDMode);
@@ -86,10 +87,15 @@ int main()
 
     spMesh.use();
     spMesh.setVec3("meshColor", 0.5, 0.5, 0.5);
+    spMesh.setVec3("selectedColorChange", 0.2, 0.2, 0.2);
     //Configure directional lighting
     spMesh.setVec3("directionalLight.direction", 0.4, -0.6, -0.4);
     spMesh.setVec3("directionalLight.ambient",   0.8,  0.8, 0.8);
     spMesh.setVec3("directionalLight.diffuse",   1.0,  1.0, 1.0);
+
+    spVertex.use();
+    spVertex.setVec3("color", 0.0f, 0.0f, 1.0f);
+    spVertex.setVec3("selectedColor", 0.0f, 1.0f, 0.0f);
 
     cube = geo::Primitive3D(geo::BasePrimitives::CUBE);
 
@@ -114,11 +120,6 @@ int main()
 
 void mainRender(bool renderIDMode)
 {
-    static float angle = 0.0f;
-    //angle += 25.0*window->getDeltaTime();
-    if (angle > 360)
-        angle = 0.0f;
-
     if(!renderIDMode)
         glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
     else
@@ -130,12 +131,12 @@ void mainRender(bool renderIDMode)
     num::Mat4 view = camera.getViewMatrix();
 
     num::Mat4 model = num::Mat4();
-    //model = num::rotateX(model, angle);
-    model = num::rotateY(model, -angle);
     model = num::translate(model, 0.0f, 0.0f, 0.0f);
 
     //Mesh
     spMesh.use();
+    spMesh.setBool("renderIDMode", renderIDMode);
+    spMesh.setInt("selectedID", selectedObjectID);//Highlight selected triangle
     spMesh.setMat4("model", model);
     spMesh.setMat4("view", view);
     spMesh.setMat4("projection", projection);
@@ -153,8 +154,7 @@ void mainRender(bool renderIDMode)
     //Render selected vertices
     spVertex.use();
     spVertex.setBool("renderIDMode", renderIDMode);
-    spVertex.setVec3("color", 0.0f, 0.0f, 1.0f);
-
+    spVertex.setInt("selectedID", selectedObjectID);//Highlight selected vertex
     spVertex.setMat4("model", model);
     spVertex.setMat4("view", view);
     spVertex.setMat4("projection", projection);
@@ -175,8 +175,8 @@ void onObjectSelect()
     glReadPixels(mousePos.x, window->getHeight() - mousePos.y, 1, 1, GL_RGB, GL_FLOAT, &pixels);
     selectedObjectID = pixels[0]*256 + pixels[1]*256*256 + pixels[2] * 256*256*256;
 
-    if (geo::ModelObject::masterObjectMapGet(selectedObjectID) != nullptr)
-        std::cout << geo::ModelObject::masterObjectMapGet(selectedObjectID)->toString() << std::endl;
+    if (geo::ModelObject::masterObjectMapGet(selectedObjectID) == nullptr)
+        selectedObjectID = -1;
 
     framebufferGeoSelect.unbind();
 }

@@ -3,6 +3,9 @@
 uniform bool renderIDMode = false;
 uniform vec3 color;
 
+uniform int selectedID = -1;//-1 maps to no object selected.
+uniform vec3 selectedColor;
+
 in float pointSize;
 flat in uint ID;//flat prevents interpolation, every fragment gets the same ID
 
@@ -20,7 +23,10 @@ void main()
     {
         if (!renderIDMode)
         {
-            outputColor = vec4(color, 1.0);
+            if (selectedID != ID)
+                outputColor = vec4(color, 1.0);
+            else
+                outputColor = vec4(selectedColor, 1.0);
         }
         else
         {
