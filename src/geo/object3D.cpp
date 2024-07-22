@@ -1,13 +1,13 @@
-#include "primitive3D.h"
+#include "object3D.h"
 
 namespace geo
 {
-    Primitive3D::Primitive3D()
+    Object3D::Object3D()
     {
 
     }
 
-    Primitive3D::Primitive3D(BasePrimitives type)
+    Object3D::Object3D(BasePrimitives type)
     {
         glGenBuffers(1, &meshVBO);
         glGenVertexArrays(1, &meshVAO);
@@ -130,25 +130,25 @@ namespace geo
         glEnableVertexAttribArray(1);
     }
 
-    void Primitive3D::renderMesh()
+    void Object3D::renderMesh()
     {
         glBindVertexArray(meshVAO);
         glDrawArrays(GL_TRIANGLES, 0, 3*faces.size());
     }
 
-    void Primitive3D::renderVertices()
+    void Object3D::renderVertices()
     {
         glBindVertexArray(verticesVAO);
         glDrawArrays(GL_POINTS, 0, vertices.size());
     }
 
-    void Primitive3D::renderEdges()
+    void Object3D::renderEdges()
     {
         glBindVertexArray(edgesVAO);
         glDrawArrays(GL_LINES, 0, 18*edges.size());
     }
 
-    const float Primitive3D::cubeVertexPosData[] = {
+    const float Object3D::cubeVertexPosData[] = {
         -0.5f, -0.5f, -0.5f,
          0.5f, -0.5f, -0.5f,
          0.5f, -0.5f,  0.5f,
@@ -160,16 +160,16 @@ namespace geo
     };
 
     //This is not actually sent to an EBO, but used to generate VBO data.
-    const int Primitive3D::cubeEBOEdgeData[] = 
+    const int Object3D::cubeEBOEdgeData[] = 
     {
         0,1,1,2,2,3,3,0,        //Bottom edges
         4,5,5,6,6,7,7,4,        //Top edges
         0,4,1,5,2,6,3,7,        //Side edges
-        0,5,1,6,2,7,0,7,1,2,4,6,//Diagonal (face) edges
+        0,5,5,2,3,6,0,7,0,2,4,6,//Diagonal (face) edges
     };
 
     //This is not actually sent to an EBO, but used to generate VBO data.
-    const int Primitive3D::cubeEBOFaceData[] =
+    const int Object3D::cubeEBOFaceData[] =
     {
         0, 2, 3,
         0, 1, 2,

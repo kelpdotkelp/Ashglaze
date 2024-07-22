@@ -12,13 +12,12 @@
 #include "geo/modelObject.h"
 #include "geo/vertex.h"
 #include "geo/face.h"
-#include "geo/primitive3D.h"
+#include "geo/object3D.h"
 #include "input/inputManager.h"
 #include "input/key.h"
 
 /*      TODO
         use a queue system for nextAvailableID in modelObject.
-        use a compute shader to calculate surface normals?
         make directional light a class that configures appropriate shaders.
 
         unbind left mouse click in fly mode, add erasure functions to inputManager.
@@ -59,7 +58,7 @@ FramebufferGeoSelect framebufferGeoSelect;
 
 Camera camera(num::Vec2(initWindowWidth/2.0f, initWindowHeight/2.0f));
 
-geo::Primitive3D cube;
+geo::Object3D cube;
 
 int main()
 {
@@ -112,7 +111,7 @@ int main()
     spEdge.setVec3("color", 0.0f, 0.0f, 1.0f);
     spVertex.setVec3("selectedColor", 0.0f, 1.0f, 0.0f);
 
-    cube = geo::Primitive3D(geo::BasePrimitives::CUBE);
+    cube = geo::Object3D(geo::BasePrimitives::CUBE);
 
     camera.setPos(0.0, 0.0, 0.0);
 
@@ -157,14 +156,17 @@ void mainRender(bool renderIDMode)
     spMesh.setMat4("projection", projection);
     cube.renderMesh();
 
-    spWireframe.use();
-    spWireframe.setMat4("model", model);
-    spWireframe.setMat4("view", view);
-    spWireframe.setMat4("projection", projection);
-    glLineWidth(2);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    cube.renderMesh();
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if (!renderIDMode)
+    {
+        spWireframe.use();
+        spWireframe.setMat4("model", model);
+        spWireframe.setMat4("view", view);
+        spWireframe.setMat4("projection", projection);
+        glLineWidth(2);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        cube.renderMesh();
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
 
     //Render selected vertices
     spVertex.use();

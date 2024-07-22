@@ -30,7 +30,7 @@ Shader::Shader(std::string path, int shaderType)
     if (!success)
     {
         glGetShaderInfoLog(ID, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::Compilation failed.\n" <<
+        std::cout << "ERROR::SHADER::Compilation failed.   " << path << "\n" <<
             infoLog << std::endl; 
     }
 }

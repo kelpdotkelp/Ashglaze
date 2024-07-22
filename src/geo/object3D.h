@@ -20,7 +20,7 @@ namespace geo
         CUBE
     };
 
-    class Primitive3D
+    class Object3D
     {
         private:
             //Store basic vertex and index information for
@@ -47,8 +47,8 @@ namespace geo
             std::list<Edge>   edges;
 
         public:
-            Primitive3D(BasePrimitives type);
-            Primitive3D();
+            Object3D(BasePrimitives type);
+            Object3D();
 
             void renderMesh();
             void renderVertices();

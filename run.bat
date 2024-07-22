@@ -1,3 +1,3 @@
 del .\out.exe >nul 2>&1
-g++ src/main.cpp glad.c src/input/callbacks.cpp src/input/inputManager.cpp src/camera.cpp src/geo/modelObject.cpp src/geo/vertex.cpp src/geo/face.cpp src/geo/edge.cpp src/geo/primitive3D.cpp src/framebufferGeoSelect.cpp src/window.cpp src/num/vec2.cpp src/num/vec3.cpp src/num/vecProducts.cpp src/num/mat4.cpp src/num/mat4Transform.cpp src/shader.cpp src/shaderProgram.cpp -lglfw3 -lgdi32 -L ./libs -I ./include -I ./src -o out.exe
+g++ src/main.cpp glad.c src/input/callbacks.cpp src/input/inputManager.cpp src/camera.cpp src/geo/modelObject.cpp src/geo/vertex.cpp src/geo/face.cpp src/geo/edge.cpp src/geo/object3D.cpp src/framebufferGeoSelect.cpp src/window.cpp src/num/vec2.cpp src/num/vec3.cpp src/num/vecProducts.cpp src/num/mat4.cpp src/num/mat4Transform.cpp src/shader.cpp src/shaderProgram.cpp -lglfw3 -lgdi32 -L ./libs -I ./include -I ./src -o out.exe
 .\out.exe
