@@ -22,7 +22,6 @@
         make directional light a class that configures appropriate shaders.
 
         unbind left mouse click in fly mode, add erasure functions to inputManager.
-        fix flying so camera doesnt jump when switching modes.
 
         VBO -> vertices pos, ID, (no EBO)
         VBO -> edges    pos, ID, (EBO?)
@@ -98,11 +97,8 @@ int main()
 
     while(!window->shouldClose())
     {
-        if (isFly)
-        {
-            camera.setSpeed(3*window->getDeltaTime());
-            camera.updateDirection(num::Vec2(inputManager.getMousePosX(), inputManager.getMousePosY()));
-        }
+        camera.setSpeed(3*window->getDeltaTime());
+        camera.updateDirection(num::Vec2(inputManager.getMousePosX(), inputManager.getMousePosY()));
 
         mainRender(false);
 
@@ -194,20 +190,24 @@ void onWindowResize(int width, int height)
 
 void onFlyModeSwitch()
 {
-    static num::Vec2 mousePos;
-
+    //Cursor position changes dependent upon glfwSetInputMode.
+    //GLFW_CURSOR_DISABLED allows the cursor to take the full range of a double.
+    static num::Vec2 mousePos;//Saves last mouse position before camera was disabled
     isFly = (isFly + 1) % 2;
 
     if (isFly)
     {
-        glfwSetCursorPos(window->getGLFWWindow(), mousePos.x, mousePos.y);
         glfwSetInputMode(window->getGLFWWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    }
+        camera.disable(false);
+        inputManager.setMousePosition(mousePos.x, mousePos.y);//This calls glfwSetCursorPos
+    }    
     else
     {
-        glfwSetInputMode(window->getGLFWWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         mousePos = num::Vec2(inputManager.getMousePosX(), inputManager.getMousePosY());
-        glfwSetCursorPos(window->getGLFWWindow(), window->getWidth()/2.0, window->getHeight()/2.0);
-        inputManager.setMousePosition(mousePos.x, mousePos.y);
+        glfwSetInputMode(window->getGLFWWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        camera.disable(true);
+
+        //Place cursor in centre of window
+        inputManager.setMousePosition(window->getWidth()/2.0f, window->getHeight()/2.0f);
     }
 }

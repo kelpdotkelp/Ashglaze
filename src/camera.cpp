@@ -31,8 +31,23 @@ num::Mat4 Camera::getViewMatrix() {return num::lookAt(trueUp, direction, right, 
 
 num::Vec3 Camera::getPos() {return position;}
 
+void Camera::disable(bool isDisabled)
+{
+    if (isDisabled)
+    {
+
+    }
+
+    Camera::isDisabled = isDisabled;
+}
+
+
+#include <iostream>
 void Camera::updateDirection(num::Vec2 mousePos)
 {
+    if (isDisabled)
+        return;
+
     num::Vec2 offset = mousePos - Camera::mousePos;
     Camera::mousePos = mousePos;
 

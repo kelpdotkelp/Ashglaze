@@ -74,6 +74,8 @@ namespace input
     {
         mousePosX = x;
         mousePosY = y;
+        if (window != nullptr)
+            glfwSetCursorPos(window, mousePosX, mousePosY);
     }
 
     /***********

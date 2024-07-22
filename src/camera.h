@@ -22,6 +22,8 @@ class Camera
         num::Vec3 right;
         num::Vec3 trueUp;
 
+        bool isDisabled = false;
+
         void updateCoordSystem();
     
     public:
@@ -31,6 +33,7 @@ class Camera
         void setPos(float x, float y, float z);
         void setSpeed(float speed);
         void updateDirection(num::Vec2 mousePos);
+        void disable(bool isDisabled);
 
         num::Vec3 getPos();
 
