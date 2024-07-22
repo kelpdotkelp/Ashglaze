@@ -24,9 +24,18 @@
         unbind left mouse click in fly mode, add erasure functions to inputManager.
         add zoom on scroll wheel
 
+        Edges and wireframe need to be specified in the same way so they match
+        Lines need to be rendered as quads (use geometry shader?) since OpenGL doesnt require glLineWidth > 1.
+        Render lines only if triangle is selected.
+
         VBO -> vertices pos, ID, (no EBO)
         VBO -> edges    pos, ID, (EBO?)
         VBO -> faces    pos, ID, normals (no EBO)
+
+        Maybe? Although this might be too much memory
+        Vertices should reference which edges/faces it belongs to
+        Edges should reference which vertices it has and faces it belongs to
+        Faces should reference which edges and vertices it has
 */
 
 int initWindowWidth = 800;
@@ -42,6 +51,7 @@ void onFlyModeSwitch();
 
 ShaderProgram spMesh;
 ShaderProgram spVertex;
+ShaderProgram spEdge;
 ShaderProgram spWireframe;
 Window* window = nullptr;
 input::InputManager inputManager;
@@ -83,6 +93,7 @@ int main()
 
     spMesh = ShaderProgram("shaders/meshVert.glsl", "shaders/meshFrag.glsl");
     spVertex = ShaderProgram("shaders/vertexVert.glsl", "shaders/vertexFrag.glsl");
+    spEdge = ShaderProgram("shaders/edgeVert.glsl", "shaders/edgeFrag.glsl");
     spWireframe = ShaderProgram("shaders/wireframeVert.glsl", "shaders/wireframeFrag.glsl");
 
     spMesh.use();
@@ -95,6 +106,10 @@ int main()
 
     spVertex.use();
     spVertex.setVec3("color", 0.0f, 0.0f, 1.0f);
+    spVertex.setVec3("selectedColor", 0.0f, 1.0f, 0.0f);
+
+    spEdge.use();
+    spEdge.setVec3("color", 0.0f, 0.0f, 1.0f);
     spVertex.setVec3("selectedColor", 0.0f, 1.0f, 0.0f);
 
     cube = geo::Primitive3D(geo::BasePrimitives::CUBE);
@@ -159,6 +174,16 @@ void mainRender(bool renderIDMode)
     spVertex.setMat4("view", view);
     spVertex.setMat4("projection", projection);
     cube.renderVertices();
+
+    //Render selected Edges
+    spEdge.use();
+    spEdge.setBool("renderIDMode", renderIDMode);
+    spEdge.setInt("selectedID", selectedObjectID);//Highlight selected vertex
+    spEdge.setMat4("model", model);
+    spEdge.setMat4("view", view);
+    spEdge.setMat4("projection", projection);
+    glLineWidth(12.5);
+    cube.renderEdges();
 }
 
 void onObjectSelect()
