@@ -3,7 +3,8 @@
 uniform vec3 meshColor;
 uniform bool renderIDMode = false;
 
-uniform int selectedID = -1;//-1 maps to no object selected.
+uniform int selectedID = -1;//-1 maps to no face selected.
+uniform int selectedIDObject = -1;
 uniform vec3 selectedColorChange;
 
 struct DirectionalLight
@@ -41,9 +42,13 @@ void main()
    }
    else
    {
-      float r = ((ID & 0x000000FF) >> 0)/255.0;
-      float g = ((ID & 0x0000FF00) >>  8)/255.0;
-      float b = ((ID & 0x00FF0000) >> 16)/255.0;
+      uint outputID = ID;
+      if (selectedIDObject != -1)//Render entire mesh with model ID rather than each face ID.
+         outputID = selectedIDObject;
+
+      float r = ((outputID & 0x000000FF) >> 0)/255.0;
+      float g = ((outputID & 0x0000FF00) >>  8)/255.0;
+      float b = ((outputID & 0x00FF0000) >> 16)/255.0;
       outputColor = vec4(r, g, b, 1.0);
    }
 }

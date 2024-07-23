@@ -8,9 +8,12 @@ namespace geo
         vertices.push_back(v1);
         vertices.push_back(v2);
         vertices.push_back(v3);
+
+        edges.reserve(3);
     }
 
     std::vector<Vertex*> Face::getVertices() {return vertices;}
+    std::vector<Edge*> Face::getEdges() {return edges;}
 
     num::Vec3 Face::getNormal()
     {
@@ -19,6 +22,8 @@ namespace geo
         num::Vec3 cp = num::crossProduct(v1, v2);
         return cp * (1.0/cp.mag());
     }
+
+    void Face::addEdge(Edge* edge) {edges.emplace_back(edge);}
 
     std::string Face::toString()
     {

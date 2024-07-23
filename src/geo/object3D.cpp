@@ -7,7 +7,7 @@ namespace geo
 
     }
 
-    Object3D::Object3D(BasePrimitives type)
+    Object3D::Object3D(BasePrimitives type): ModelObject(this)
     {
         glGenBuffers(1, &meshVBO);
         glGenVertexArrays(1, &meshVAO);
@@ -51,6 +51,27 @@ namespace geo
                 edges.emplace_back(
                     dynamic_cast<Vertex*>(ModelObject::masterObjectMapGet(tempVertexMap[cubeEBOEdgeData[i*2]])),
                     dynamic_cast<Vertex*>(ModelObject::masterObjectMapGet(tempVertexMap[cubeEBOEdgeData[i*2 + 1]])));
+            }
+
+            //Associate faces with their edges
+            for (auto& edge: edges)
+            {
+                std::vector<Vertex*> edgeV = edge.getVertices();
+
+                for (auto& face: faces)
+                {
+                    std::vector<Vertex*> faceV = face.getVertices();
+                    if((faceV[0] == edgeV[0] && faceV[1] == edgeV[1])
+                        || (faceV[1] == edgeV[0] && faceV[2] == edgeV[1])
+                        || (faceV[2] == edgeV[0] && faceV[0] == edgeV[1])
+                        || (faceV[0] == edgeV[1] && faceV[1] == edgeV[0])
+                        || (faceV[1] == edgeV[1] && faceV[2] == edgeV[0])
+                        || (faceV[2] == edgeV[1] && faceV[0] == edgeV[0])
+                    )
+                    {
+                        face.addEdge(&edge);
+                    }
+                }
             }
         }
 
@@ -130,6 +151,10 @@ namespace geo
         glEnableVertexAttribArray(1);
     }
 
+    void Object3D::select() {m_isSelected = true;}
+    void Object3D::unselect() {m_isSelected = false;}
+    bool Object3D::isSelected() {return m_isSelected;}
+
     void Object3D::renderMesh()
     {
         glBindVertexArray(meshVAO);
@@ -146,6 +171,17 @@ namespace geo
     {
         glBindVertexArray(edgesVAO);
         glDrawArrays(GL_LINES, 0, 18*edges.size());
+    }
+
+    std::string Object3D::toString()
+    {
+        std::string outStr = "<ID=";
+        if (getID() < 10)
+            outStr += "00";
+        else if (getID() < 100)
+            outStr += "0";
+
+        return outStr + std::to_string(getID()) + " Object3D" + ">";
     }
 
     const float Object3D::cubeVertexPosData[] = {

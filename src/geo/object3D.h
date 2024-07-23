@@ -20,7 +20,7 @@ namespace geo
         CUBE
     };
 
-    class Object3D
+    class Object3D : public ModelObject
     {
         private:
             //Store basic vertex and index information for
@@ -28,6 +28,8 @@ namespace geo
             const static float cubeVertexPosData[3*8];
             const static int cubeEBOFaceData[6*6];//Two triangles (6 vertices) per face (6 faces)
             const static int cubeEBOEdgeData[2*18];//18 edges, 2 vertices per edge
+
+            bool m_isSelected = false;
 
             unsigned int        meshVBO;
             unsigned int        meshVAO;
@@ -50,9 +52,15 @@ namespace geo
             Object3D(BasePrimitives type);
             Object3D();
 
+            void select();
+            void unselect();
+            bool isSelected();
+
             void renderMesh();
             void renderVertices();
             void renderEdges();
+
+            std::string toString();
     };
 }
 

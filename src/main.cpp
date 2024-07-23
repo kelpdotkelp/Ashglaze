@@ -2,6 +2,7 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <typeinfo>
 
 #include "camera.h"
 #include "num/num.h"
@@ -12,24 +13,18 @@
 #include "geo/modelObject.h"
 #include "geo/vertex.h"
 #include "geo/face.h"
+#include "geo/objectSelection.h"
 #include "geo/object3D.h"
 #include "input/inputManager.h"
 #include "input/key.h"
 
 /*      TODO
-        use a queue system for nextAvailableID in modelObject.
-        make directional light a class that configures appropriate shaders.
+        ->  use a queue system for nextAvailableID in modelObject.
+        ->  make directional light a class that configures appropriate shaders.
+        ->  unbind left mouse click in fly mode, add erasure functions to inputManager.
+        ->  add zoom on scroll wheel.
 
-        unbind left mouse click in fly mode, add erasure functions to inputManager.
-        add zoom on scroll wheel
-
-        Edges and wireframe need to be specified in the same way so they match
         Lines need to be rendered as quads (use geometry shader?) since OpenGL doesnt require glLineWidth > 1.
-        Render lines only if triangle is selected.
-
-        VBO -> vertices pos, ID, (no EBO)
-        VBO -> edges    pos, ID, (EBO?)
-        VBO -> faces    pos, ID, normals (no EBO)
 
         Maybe? Although this might be too much memory
         Vertices should reference which edges/faces it belongs to
@@ -40,7 +35,6 @@
 int initWindowWidth = 800;
 int initWindowHeight = 600;
 
-int selectedObjectID = -1;//-1 maps to no object selected.
 bool isFly = false;
 
 void mainRender(bool renderIDMode);
@@ -58,6 +52,8 @@ FramebufferGeoSelect framebufferGeoSelect;
 
 Camera camera(num::Vec2(initWindowWidth/2.0f, initWindowHeight/2.0f));
 
+//Maintains which Object3D and which edge/vertex/face has been selected. 
+geo::ObjectSelection objectSelected;
 geo::Object3D cube;
 
 int main()
@@ -109,7 +105,7 @@ int main()
 
     spEdge.use();
     spEdge.setVec3("color", 0.0f, 0.0f, 1.0f);
-    spVertex.setVec3("selectedColor", 0.0f, 1.0f, 0.0f);
+    spEdge.setVec3("selectedColor", 0.0f, 1.0f, 0.0f);
 
     cube = geo::Object3D(geo::BasePrimitives::CUBE);
 
@@ -150,13 +146,22 @@ void mainRender(bool renderIDMode)
     //Mesh
     spMesh.use();
     spMesh.setBool("renderIDMode", renderIDMode);
-    spMesh.setInt("selectedID", selectedObjectID);//Highlight selected triangle
     spMesh.setMat4("model", model);
     spMesh.setMat4("view", view);
     spMesh.setMat4("projection", projection);
+    if (objectSelected.object == cube.getID())
+    {
+        spMesh.setInt("selectedID", objectSelected.face);//Highlight selected triangle
+        spMesh.setInt("selectedIDObject", -1);
+    }
+    else//Change rendering so entire mesh maps to Object3D.getID()
+    {
+        spMesh.setInt("selectedID", -1);
+        spMesh.setInt("selectedIDObject", cube.getID());
+    }
     cube.renderMesh();
 
-    if (!renderIDMode)
+    if (!renderIDMode && (objectSelected.object == cube.getID()))
     {
         spWireframe.use();
         spWireframe.setMat4("model", model);
@@ -168,24 +173,35 @@ void mainRender(bool renderIDMode)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    //Render selected vertices
-    spVertex.use();
-    spVertex.setBool("renderIDMode", renderIDMode);
-    spVertex.setInt("selectedID", selectedObjectID);//Highlight selected vertex
-    spVertex.setMat4("model", model);
-    spVertex.setMat4("view", view);
-    spVertex.setMat4("projection", projection);
-    cube.renderVertices();
+    if (objectSelected.object == cube.getID())
+    {
+        //Render selected vertices
+        spVertex.use();
+        spVertex.setBool("renderIDMode", renderIDMode);
+        spVertex.setInt("selectedID", objectSelected.vertex);//Highlight selected vertex
+        spVertex.setMat4("model", model);
+        spVertex.setMat4("view", view);
+        spVertex.setMat4("projection", projection);
+        cube.renderVertices();
 
-    //Render selected Edges
-    spEdge.use();
-    spEdge.setBool("renderIDMode", renderIDMode);
-    spEdge.setInt("selectedID", selectedObjectID);//Highlight selected vertex
-    spEdge.setMat4("model", model);
-    spEdge.setMat4("view", view);
-    spEdge.setMat4("projection", projection);
-    glLineWidth(12.5);
-    cube.renderEdges();
+        //Render selected Edges
+        spEdge.use();
+        spEdge.setBool("renderIDMode", renderIDMode);
+        spEdge.setInt("selectedID", objectSelected.edge);//Highlight selected vertex
+        geo::Face* f = dynamic_cast<geo::Face*>(geo::ModelObject::masterObjectMapGet(objectSelected.face));
+        if (f != nullptr)
+        {
+            std::vector<geo::Edge*> e = f->getEdges();
+            spEdge.setVec3("IDToRender", e[0]->getID(), e[1]->getID(), e[2]->getID());
+        }
+        else
+            spEdge.setVec3("IDToRender", -1, -1, -1);
+        spEdge.setMat4("model", model);
+        spEdge.setMat4("view", view);
+        spEdge.setMat4("projection", projection);
+        glLineWidth(12.5);
+        cube.renderEdges();
+    }
 }
 
 void onObjectSelect()
@@ -200,10 +216,39 @@ void onObjectSelect()
     num::Vec2 mousePos = num::Vec2(inputManager.getMousePosX(), inputManager.getMousePosY());
     glFinish();
     glReadPixels(mousePos.x, window->getHeight() - mousePos.y, 1, 1, GL_RGB, GL_FLOAT, &pixels);
-    selectedObjectID = pixels[0]*256 + pixels[1]*256*256 + pixels[2] * 256*256*256;
+    unsigned int selectedObjectID = pixels[0]*256 + pixels[1]*256*256 + pixels[2] * 256*256*256;
 
     if (geo::ModelObject::masterObjectMapGet(selectedObjectID) == nullptr)
+    {
         selectedObjectID = -1;
+        objectSelected.reset();//Deselect all objects
+    }
+    else
+    {
+        //Determine if a Object3D was selected, or if a feature within Object3D was selected.
+        if (objectSelected.object == -1)
+            objectSelected.object = selectedObjectID;
+        else//Object has already been selected, now choose a face/vertex/edge
+        {
+            if (dynamic_cast<geo::Vertex*>(geo::ModelObject::masterObjectMapGet(selectedObjectID)) != nullptr)
+            {
+                objectSelected.vertex = selectedObjectID;
+                objectSelected.edge = -1;
+                objectSelected.face = -1;
+            }
+            else if (dynamic_cast<geo::Edge*>(geo::ModelObject::masterObjectMapGet(selectedObjectID)) != nullptr)   
+            {
+                objectSelected.edge = selectedObjectID;
+                objectSelected.vertex = -1;
+            }
+            else if (dynamic_cast<geo::Face*>(geo::ModelObject::masterObjectMapGet(selectedObjectID)) != nullptr)
+            {
+                objectSelected.face = selectedObjectID;
+                objectSelected.vertex = -1;
+                objectSelected.edge = -1;
+            }
+        }
+    }
 
     framebufferGeoSelect.unbind();
 }
