@@ -10,6 +10,10 @@ namespace geo
         vertices.push_back(v3);
 
         edges.reserve(3);
+
+        v1->faces.emplace_back(this);
+        v2->faces.emplace_back(this);
+        v3->faces.emplace_back(this);
     }
 
     std::vector<Vertex*> Face::getVertices() {return vertices;}

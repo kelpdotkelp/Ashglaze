@@ -10,6 +10,7 @@ namespace geo
             int vertex = -1;
             int face = -1;
             int edge = -1;
+            int lastSelected = -1;
 
             void reset()
             {
@@ -17,6 +18,7 @@ namespace geo
                 vertex = -1;
                 face = -1;
                 edge = -1;
+                lastSelected = -1;
             }
     };
 }

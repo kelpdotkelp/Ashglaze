@@ -5,6 +5,7 @@
 
 #include "edge.h"
 #include "modelObject.h"
+#include "object3D.h"
 #include "vertex.h"
 #include "num/num.h"
 
@@ -16,7 +17,13 @@ namespace geo
             std::vector<Vertex*> vertices;
             std::vector<Edge*> edges;
 
+            unsigned int VBOIndex;//Where this face is in its VBO
+
         public:
+            friend class Object3D;
+            friend class Vertex;
+            friend class Edge;
+
             Face(Vertex* v1, Vertex* v2, Vertex* v3);
 
             std::vector<Vertex*> getVertices();

@@ -35,7 +35,7 @@ namespace geo
 
     ModelObject* ModelObject::masterObjectMapGet(unsigned int ID)
     {
-        if(masterObjectMap.count(ID) != 0)
+        if(masterObjectMap.count(ID) != 0 && masterObjectMap.find(ID) != masterObjectMap.end())
             return masterObjectMap.at(ID);
         else
             return nullptr;

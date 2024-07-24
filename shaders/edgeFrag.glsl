@@ -13,9 +13,9 @@ out vec4 outputColor;
 
 void main()
 {
-    if (uint(IDToRender.x) == ID ||
+    if ((uint(IDToRender.x) == ID ||
         uint(IDToRender.y) == ID ||
-        uint(IDToRender.z) == ID)
+        uint(IDToRender.z) == ID) && IDToRender.x != -1 && IDToRender.y != -1 && IDToRender.z != -1)
     {
         if (!renderIDMode)//Visual rendering
         {

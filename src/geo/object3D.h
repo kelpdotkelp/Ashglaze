@@ -34,14 +34,20 @@ namespace geo
             unsigned int        meshVBO;
             unsigned int        meshVAO;
             std::vector<float>  meshVBOData;
+            //1 ID, 3 position, 3 normal = 7
+            unsigned int meshVBOStride = 7;
 
             unsigned int        verticesVBO;
             unsigned int        verticesVAO;
             std::vector<float>  verticesVBOData;
+            //1 ID, 3 position = 4
+            unsigned int verticesVBOStride = 4;
 
             unsigned int        edgesVBO;
             unsigned int        edgesVAO;
             std::vector<float>  edgesVBOData;
+            //1 ID, 3 position = 4
+            unsigned int edgesVBOStride = 4;
 
             //Geometry data
             std::list<Vertex> vertices;
@@ -52,13 +58,11 @@ namespace geo
             Object3D(BasePrimitives type);
             Object3D();
 
-            void select();
-            void unselect();
-            bool isSelected();
-
             void renderMesh();
             void renderVertices();
             void renderEdges();
+
+            void translateGeoFeature(unsigned int geoID, num::Vec3 transAmount);
 
             std::string toString();
     };

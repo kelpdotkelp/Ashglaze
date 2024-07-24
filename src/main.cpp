@@ -23,6 +23,7 @@
         ->  make directional light a class that configures appropriate shaders.
         ->  unbind left mouse click in fly mode, add erasure functions to inputManager.
         ->  add zoom on scroll wheel.
+        ->  forward declare all classes that only use pointers
 
         Lines need to be rendered as quads (use geometry shader?) since OpenGL doesnt require glLineWidth > 1.
 
@@ -41,6 +42,8 @@ void mainRender(bool renderIDMode);
 void onObjectSelect();
 void onWindowResize(int width, int height);
 void onFlyModeSwitch();
+
+void TEST_translateGeo(int direction, std::string axis);
 
 ShaderProgram spMesh;
 ShaderProgram spVertex;
@@ -85,6 +88,14 @@ int main()
     inputManager.registerKey(std::bind(&Camera::moveUp, &camera), GLFW_KEY_SPACE, input::InputType::POLLED, input::TriggerType::CONTINUOUS);
     inputManager.registerKey(std::bind(&Window::closeWindow, window), GLFW_KEY_Q, input::InputType::EVENT, input::TriggerType::SINGLE_PRESS);
     inputManager.registerKey(onFlyModeSwitch, GLFW_KEY_F, input::InputType::EVENT, input::TriggerType::SINGLE_PRESS);
+
+    //Testing geometry translation, do this from UI at a later point.
+    inputManager.registerKey(std::bind(&TEST_translateGeo, 1, std::string("X")), GLFW_KEY_T, input::InputType::POLLED, input::TriggerType::CONTINUOUS);
+    inputManager.registerKey(std::bind(&TEST_translateGeo, -1, std::string("X")), GLFW_KEY_G, input::InputType::POLLED, input::TriggerType::CONTINUOUS);
+    inputManager.registerKey(std::bind(&TEST_translateGeo, 1, std::string("Y")), GLFW_KEY_Y, input::InputType::POLLED, input::TriggerType::CONTINUOUS);
+    inputManager.registerKey(std::bind(&TEST_translateGeo, -1, std::string("Y")), GLFW_KEY_H, input::InputType::POLLED, input::TriggerType::CONTINUOUS);
+    inputManager.registerKey(std::bind(&TEST_translateGeo, 1, std::string("Z")), GLFW_KEY_U, input::InputType::POLLED, input::TriggerType::CONTINUOUS);
+    inputManager.registerKey(std::bind(&TEST_translateGeo, -1, std::string("Z")), GLFW_KEY_J, input::InputType::POLLED, input::TriggerType::CONTINUOUS);
 
     spMesh = ShaderProgram("shaders/meshVert.glsl", "shaders/meshFrag.glsl");
     spVertex = ShaderProgram("shaders/vertexVert.glsl", "shaders/vertexFrag.glsl");
@@ -191,11 +202,14 @@ void mainRender(bool renderIDMode)
         geo::Face* f = dynamic_cast<geo::Face*>(geo::ModelObject::masterObjectMapGet(objectSelected.face));
         if (f != nullptr)
         {
+            std::cout << f->toString() << std::endl;
             std::vector<geo::Edge*> e = f->getEdges();
             spEdge.setVec3("IDToRender", e[0]->getID(), e[1]->getID(), e[2]->getID());
         }
         else
+        {
             spEdge.setVec3("IDToRender", -1, -1, -1);
+        }
         spEdge.setMat4("model", model);
         spEdge.setMat4("view", view);
         spEdge.setMat4("projection", projection);
@@ -248,6 +262,7 @@ void onObjectSelect()
                 objectSelected.edge = -1;
             }
         }
+        objectSelected.lastSelected = selectedObjectID;
     }
 
     framebufferGeoSelect.unbind();
@@ -282,4 +297,19 @@ void onFlyModeSwitch()
         //Place cursor in centre of window
         inputManager.setMousePosition(window->getWidth()/2.0f, window->getHeight()/2.0f);
     }
+}
+
+void TEST_translateGeo(int direction, std::string axis)
+{
+    static float spd = 1.0f;
+
+    if (objectSelected.lastSelected == -1)
+        return;
+
+    if (axis == "X")
+        cube.translateGeoFeature(objectSelected.lastSelected, direction*num::Vec3(spd*window->getDeltaTime(), 0, 0));
+    if (axis == "Y")
+        cube.translateGeoFeature(objectSelected.lastSelected, direction*num::Vec3(0, spd*window->getDeltaTime(), 0));
+    if (axis == "Z")
+        cube.translateGeoFeature(objectSelected.lastSelected, direction*num::Vec3(0, 0, spd*window->getDeltaTime()));
 }
