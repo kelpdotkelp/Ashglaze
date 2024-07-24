@@ -54,6 +54,8 @@ namespace geo
             std::list<Face>   faces;
             std::list<Edge>   edges;
 
+            void translateVertex(unsigned int vertexID, num::Vec3 transAmount);
+
         public:
             Object3D(BasePrimitives type);
             Object3D();

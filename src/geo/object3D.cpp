@@ -181,64 +181,80 @@ namespace geo
         glDrawArrays(GL_LINES, 0, 18*edges.size());
     }
 
-    void Object3D::translateGeoFeature(unsigned int geoID, num::Vec3 transAmount)
+    void Object3D::translateVertex(unsigned int geoID, num::Vec3 transAmount)
     {
         //Vertex translation
         Vertex* vertex = dynamic_cast<Vertex*>(ModelObject::masterObjectMapGet(geoID));
-        if (vertex != nullptr)
+        vertex->position = vertex->position + transAmount;
+        //Update all VBOs with new vertex position
+        //Update verticesVBOData
+        //***IMPORTANT*** offset VBOIndex by 1 because first value is ID! 
+        verticesVBOData[vertex->VBOIndex+1] = vertex->position.x;
+        verticesVBOData[vertex->VBOIndex+2] = vertex->position.y;
+        verticesVBOData[vertex->VBOIndex+3] = vertex->position.z;
+
+        //Update edgesVBOData
+        for(auto edgeBelongingTo: vertex->edges)
         {
-            vertex->position = vertex->position + transAmount;
-            //Update all VBOs with new vertex position
-            //Update verticesVBOData
+            unsigned int whichVertex = 0;// = 1*edgesVBOStride (offset) if second edge vertex must update
+            if (edgeBelongingTo->vertices[0]->getID() == vertex->getID())
+                whichVertex = 0;
+            else if (edgeBelongingTo->vertices[1]->getID() == vertex->getID())
+                whichVertex = edgesVBOStride;
             //***IMPORTANT*** offset VBOIndex by 1 because first value is ID! 
-            verticesVBOData[vertex->VBOIndex+1] = vertex->position.x;
-            verticesVBOData[vertex->VBOIndex+2] = vertex->position.y;
-            verticesVBOData[vertex->VBOIndex+3] = vertex->position.z;
-
-            //Update edgesVBOData
-            for(auto edgeBelongingTo: vertex->edges)
-            {
-                unsigned int whichVertex = 0;// = 1*edgesVBOStride (offset) if second edge vertex must update
-                if (edgeBelongingTo->vertices[0]->getID() == vertex->getID())
-                    whichVertex = 0;
-                else if (edgeBelongingTo->vertices[1]->getID() == vertex->getID())
-                    whichVertex = edgesVBOStride;
-                //***IMPORTANT*** offset VBOIndex by 1 because first value is ID! 
-                edgesVBOData[edgeBelongingTo->VBOIndex+1 + whichVertex] = vertex->position.x;
-                edgesVBOData[edgeBelongingTo->VBOIndex+2 + whichVertex] = vertex->position.y;
-                edgesVBOData[edgeBelongingTo->VBOIndex+3 + whichVertex] = vertex->position.z;
-            }
-
-            //Update facesVBOData
-            for (auto faceBelongingTo: vertex->faces)
-            {
-
-                unsigned int whichVertex = 0;// = (1 or 2)*meshVBOStride
-                for (int i=0; i<3; i++)
-                {
-                    if (faceBelongingTo->vertices[i]->getID() == vertex->getID())
-                    {
-                        whichVertex = i*meshVBOStride;
-                        break;
-                    }
-                }
-                //***IMPORTANT*** offset VBOIndex by 1 because first value is ID! 
-                meshVBOData[faceBelongingTo->VBOIndex+1 + whichVertex] = vertex->position.x;
-                meshVBOData[faceBelongingTo->VBOIndex+2 + whichVertex] = vertex->position.y;
-                meshVBOData[faceBelongingTo->VBOIndex+3 + whichVertex] = vertex->position.z;
-            }
-
-            //Update VBO data on GPU
-            glBindVertexArray(verticesVAO);
-            glBindBuffer(GL_ARRAY_BUFFER, verticesVBO);
-            glBufferData(GL_ARRAY_BUFFER, verticesVBOData.size()*sizeof(float), verticesVBOData.data(), GL_DYNAMIC_DRAW);
-            glBindVertexArray(edgesVAO);
-            glBindBuffer(GL_ARRAY_BUFFER, edgesVBO);
-            glBufferData(GL_ARRAY_BUFFER, edgesVBOData.size()*sizeof(float), edgesVBOData.data(), GL_DYNAMIC_DRAW);
-            glBindVertexArray(meshVAO);
-            glBindBuffer(GL_ARRAY_BUFFER, meshVBO);
-            glBufferData(GL_ARRAY_BUFFER, meshVBOData.size()*sizeof(float), meshVBOData.data(), GL_DYNAMIC_DRAW);
+            edgesVBOData[edgeBelongingTo->VBOIndex+1 + whichVertex] = vertex->position.x;
+            edgesVBOData[edgeBelongingTo->VBOIndex+2 + whichVertex] = vertex->position.y;
+            edgesVBOData[edgeBelongingTo->VBOIndex+3 + whichVertex] = vertex->position.z;
         }
+
+        //Update facesVBOData
+        for (auto faceBelongingTo: vertex->faces)
+        {
+
+            unsigned int whichVertex = 0;// = (1 or 2)*meshVBOStride
+            for (int i=0; i<3; i++)
+            {
+                if (faceBelongingTo->vertices[i]->getID() == vertex->getID())
+                {
+                    whichVertex = i*meshVBOStride;
+                    break;
+                }
+            }
+            //***IMPORTANT*** offset VBOIndex by 1 because first value is ID! 
+            meshVBOData[faceBelongingTo->VBOIndex+1 + whichVertex] = vertex->position.x;
+            meshVBOData[faceBelongingTo->VBOIndex+2 + whichVertex] = vertex->position.y;
+            meshVBOData[faceBelongingTo->VBOIndex+3 + whichVertex] = vertex->position.z;
+        }
+
+        //Update VBO data on GPU
+        glBindVertexArray(verticesVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, verticesVBO);
+        glBufferData(GL_ARRAY_BUFFER, verticesVBOData.size()*sizeof(float), verticesVBOData.data(), GL_DYNAMIC_DRAW);
+        glBindVertexArray(edgesVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, edgesVBO);
+        glBufferData(GL_ARRAY_BUFFER, edgesVBOData.size()*sizeof(float), edgesVBOData.data(), GL_DYNAMIC_DRAW);
+        glBindVertexArray(meshVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, meshVBO);
+        glBufferData(GL_ARRAY_BUFFER, meshVBOData.size()*sizeof(float), meshVBOData.data(), GL_DYNAMIC_DRAW);
+    }
+
+    void Object3D::translateGeoFeature(unsigned int geoID, num::Vec3 transAmount)
+    {
+        if(dynamic_cast<Vertex*>(ModelObject::masterObjectMapGet(geoID)) != nullptr)
+            translateVertex(geoID, transAmount);
+        Edge* e = dynamic_cast<Edge*>(ModelObject::masterObjectMapGet(geoID));
+        if(e != nullptr)
+        {
+            translateVertex(e->vertices[0]->getID(), transAmount);
+            translateVertex(e->vertices[1]->getID(), transAmount);
+        }
+        Face* f = dynamic_cast<Face*>(ModelObject::masterObjectMapGet(geoID));   
+        if(f != nullptr)
+        {
+            translateVertex(f->vertices[0]->getID(), transAmount);
+            translateVertex(f->vertices[1]->getID(), transAmount);
+            translateVertex(f->vertices[2]->getID(), transAmount);
+        }   
     }
 
     std::string Object3D::toString()
