@@ -24,6 +24,7 @@
         ->  unbind left mouse click in fly mode, add erasure functions to inputManager.
         ->  add zoom on scroll wheel.
         ->  forward declare all classes that only use pointers
+        ->  make vertices always render on top
 
         Lines need to be rendered as quads (use geometry shader?) since OpenGL doesnt require glLineWidth > 1.
 

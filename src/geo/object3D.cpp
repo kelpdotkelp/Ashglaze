@@ -224,6 +224,15 @@ namespace geo
             meshVBOData[faceBelongingTo->VBOIndex+1 + whichVertex] = vertex->position.x;
             meshVBOData[faceBelongingTo->VBOIndex+2 + whichVertex] = vertex->position.y;
             meshVBOData[faceBelongingTo->VBOIndex+3 + whichVertex] = vertex->position.z;
+
+            //Update surface normals
+            num::Vec3 normal = faceBelongingTo->getNormal();
+            for (int i=0; i<3; i++)
+            {
+                meshVBOData[faceBelongingTo->VBOIndex+4 + i*meshVBOStride] = normal.x;
+                meshVBOData[faceBelongingTo->VBOIndex+5 + i*meshVBOStride] = normal.y;
+                meshVBOData[faceBelongingTo->VBOIndex+6 + i*meshVBOStride] = normal.z;
+            }
         }
 
         //Update VBO data on GPU
