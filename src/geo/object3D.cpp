@@ -76,55 +76,9 @@ namespace geo
         }
 
         //Populate VBOs
-        num::Vec3 pos;
-        num::Vec3 normal;
-        unsigned int VBOIndex = 0;
-        for (auto& vertex: vertices) {
-            verticesVBOData.push_back((float)vertex.getID());
-            pos = vertex.getPos();
-            verticesVBOData.push_back(pos.x);
-            verticesVBOData.push_back(pos.y);
-            verticesVBOData.push_back(pos.z);
-
-            vertex.VBOIndex = verticesVBOStride*VBOIndex;
-            VBOIndex++;
-        }
-
-        VBOIndex = 0;
-        for (auto& face: faces)
-        {
-            for (int i=0; i<3; i++)
-            {
-                meshVBOData.push_back((float)face.getID());
-                pos = face.getVertices()[i]->getPos();
-                meshVBOData.push_back(pos.x);
-                meshVBOData.push_back(pos.y);
-                meshVBOData.push_back(pos.z);
-                normal = face.getNormal();
-                meshVBOData.push_back(normal.x);
-                meshVBOData.push_back(normal.y);
-                meshVBOData.push_back(normal.z);
-            }
-
-            face.VBOIndex = 3*meshVBOStride*VBOIndex;
-            VBOIndex++;
-        }
-
-        VBOIndex = 0;
-        for (auto& edge: edges)
-        {
-            for (int i=0; i<2; i++)
-            {
-                edgesVBOData.push_back((float)edge.getID());
-                pos = edge.getVertices()[i]->getPos();
-                edgesVBOData.push_back(pos.x);
-                edgesVBOData.push_back(pos.y);
-                edgesVBOData.push_back(pos.z);
-            }
-
-            edge.VBOIndex = 2*edgesVBOStride*VBOIndex;
-            VBOIndex++;
-        }
+        generateVerticesVBOData();
+        generateEdgesVBOData();
+        generateFacesVBOData();
 
         //Mesh
         glBindVertexArray(meshVAO);
@@ -266,6 +220,19 @@ namespace geo
         }   
     }
 
+    void Object3D::insertVertex(unsigned int geoID)
+    {
+        Edge* selectedEdge = dynamic_cast<Edge*>(ModelObject::masterObjectMapGet(geoID));
+        if (selectedEdge != nullptr)//Attempting to insert a vertex along an edge
+        {
+            for (int i=0; i<2; i++)//An edge only ever has 2 faces
+            {
+                unsigned int thirdVertex = selectedEdge->faces[i]->getThirdVertex(
+                    selectedEdge->vertices[0]->getID(), selectedEdge->vertices[1]->getID());
+            }
+        }
+    }
+
     std::string Object3D::toString()
     {
         std::string outStr = "<ID=";
@@ -275,6 +242,73 @@ namespace geo
             outStr += "0";
 
         return outStr + std::to_string(getID()) + " Object3D" + ">";
+    }
+
+    void Object3D::generateVerticesVBOData()
+    {
+        verticesVBOData.clear();//Remove list contents
+
+        unsigned int VBOIndex = 0;
+        num::Vec3 pos;
+        for (auto& vertex: vertices)
+        {
+            verticesVBOData.push_back((float)vertex.getID());
+            pos = vertex.getPos();
+            verticesVBOData.push_back(pos.x);
+            verticesVBOData.push_back(pos.y);
+            verticesVBOData.push_back(pos.z);
+
+            vertex.VBOIndex = verticesVBOStride*VBOIndex;
+            VBOIndex++;
+        }
+    }
+
+    void Object3D::generateEdgesVBOData()
+    {
+        edgesVBOData.clear();//Remove list contents
+
+        unsigned int VBOIndex = 0;
+        num::Vec3 pos;
+        for (auto& edge: edges)
+        {
+            for (int i=0; i<2; i++)
+            {
+                edgesVBOData.push_back((float)edge.getID());
+                pos = edge.getVertices()[i]->getPos();
+                edgesVBOData.push_back(pos.x);
+                edgesVBOData.push_back(pos.y);
+                edgesVBOData.push_back(pos.z);
+            }
+
+            edge.VBOIndex = 2*edgesVBOStride*VBOIndex;
+            VBOIndex++;
+        }
+
+    }
+
+    void Object3D::generateFacesVBOData()
+    {
+        unsigned int VBOIndex = 0;
+        num::Vec3 pos;
+        num::Vec3 normal;
+        for (auto& face: faces)
+        {
+            for (int i=0; i<3; i++)
+            {
+                meshVBOData.push_back((float)face.getID());
+                pos = face.getVertices()[i]->getPos();
+                meshVBOData.push_back(pos.x);
+                meshVBOData.push_back(pos.y);
+                meshVBOData.push_back(pos.z);
+                normal = face.getNormal();
+                meshVBOData.push_back(normal.x);
+                meshVBOData.push_back(normal.y);
+                meshVBOData.push_back(normal.z);
+            }
+
+            face.VBOIndex = 3*meshVBOStride*VBOIndex;
+            VBOIndex++;
+        }
     }
 
     const float Object3D::cubeVertexPosData[] = {

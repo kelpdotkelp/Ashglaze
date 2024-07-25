@@ -1,8 +1,9 @@
 #include "modelObject.h"
-#include <iostream>
+
 namespace geo
 {
     std::unordered_map<unsigned int, ModelObject*> ModelObject::masterObjectMap;
+    std::deque<unsigned int> ModelObject::reuseIDDeque;
     unsigned int ModelObject::nextAvailableID = 0;
 
     ModelObject::ModelObject()
@@ -12,8 +13,16 @@ namespace geo
 
     ModelObject::ModelObject(ModelObject* childPtr)
     {
-        ID = nextAvailableID;
-        nextAvailableID++;
+        if (!ModelObject::reuseIDDeque.empty())
+        {
+            ID = ModelObject::reuseIDDeque.front();
+            ModelObject::reuseIDDeque.pop_front();
+        }
+        else
+        {
+            ID = nextAvailableID;
+            nextAvailableID++;
+        }
         
         masterObjectMap.insert({ID, childPtr});
     }
@@ -39,5 +48,11 @@ namespace geo
             return masterObjectMap.at(ID);
         else
             return nullptr;
+    }
+
+    void ModelObject::masterObjectMapDelete(unsigned int ID)
+    {
+        ModelObject::masterObjectMap.erase(ID);
+        ModelObject::reuseIDDeque.push_back(ID);
     }
 }

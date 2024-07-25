@@ -27,7 +27,25 @@ namespace geo
         return cp * (1.0/cp.mag());
     }
 
-    void Face::addEdge(Edge* edge) {edges.emplace_back(edge);}
+    unsigned int Face::getThirdVertex(unsigned int vertex0ID, unsigned int vertex1ID)
+    {
+        unsigned int thirdVertex;
+        for (auto vertex: vertices)
+        {
+            if (vertex->getID() != vertex0ID && vertex->getID() != vertex1ID)
+            {
+                thirdVertex = vertex->getID();
+                break;
+            }
+        }
+        return thirdVertex;
+    }
+
+    void Face::addEdge(Edge* edge)
+    {
+        edges.emplace_back(edge);
+        edge->faces.emplace_back(this);
+    }
 
     std::string Face::toString()
     {

@@ -32,6 +32,7 @@ namespace geo
             void addEdge(Edge* edge);
 
             num::Vec3 getNormal();
+            unsigned int getThirdVertex(unsigned int vertex0ID, unsigned int vertex1ID);
 
             std::string toString();
     };

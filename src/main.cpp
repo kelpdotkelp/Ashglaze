@@ -45,6 +45,7 @@ void onWindowResize(int width, int height);
 void onFlyModeSwitch();
 
 void TEST_translateGeo(int direction, std::string axis);
+void TEST_insertVertex();
 
 ShaderProgram spMesh;
 ShaderProgram spVertex;
@@ -97,6 +98,7 @@ int main()
     inputManager.registerKey(std::bind(&TEST_translateGeo, -1, std::string("Y")), GLFW_KEY_H, input::InputType::POLLED, input::TriggerType::CONTINUOUS);
     inputManager.registerKey(std::bind(&TEST_translateGeo, 1, std::string("Z")), GLFW_KEY_U, input::InputType::POLLED, input::TriggerType::CONTINUOUS);
     inputManager.registerKey(std::bind(&TEST_translateGeo, -1, std::string("Z")), GLFW_KEY_J, input::InputType::POLLED, input::TriggerType::CONTINUOUS);
+    inputManager.registerKey(TEST_insertVertex, GLFW_KEY_I, input::InputType::EVENT, input::TriggerType::SINGLE_PRESS);
 
     spMesh = ShaderProgram("shaders/meshVert.glsl", "shaders/meshFrag.glsl");
     spVertex = ShaderProgram("shaders/vertexVert.glsl", "shaders/vertexFrag.glsl");
@@ -203,7 +205,6 @@ void mainRender(bool renderIDMode)
         geo::Face* f = dynamic_cast<geo::Face*>(geo::ModelObject::masterObjectMapGet(objectSelected.face));
         if (f != nullptr)
         {
-            std::cout << f->toString() << std::endl;
             std::vector<geo::Edge*> e = f->getEdges();
             spEdge.setVec3("IDToRender", e[0]->getID(), e[1]->getID(), e[2]->getID());
         }
@@ -266,6 +267,9 @@ void onObjectSelect()
         objectSelected.lastSelected = selectedObjectID;
     }
 
+    if (objectSelected.lastSelected != -1)
+        std::cout << geo::ModelObject::masterObjectMapGet(objectSelected.lastSelected)->toString() << std::endl;
+
     framebufferGeoSelect.unbind();
 }
 
@@ -313,4 +317,12 @@ void TEST_translateGeo(int direction, std::string axis)
         cube.translateGeoFeature(objectSelected.lastSelected, direction*num::Vec3(0, spd*window->getDeltaTime(), 0));
     if (axis == "Z")
         cube.translateGeoFeature(objectSelected.lastSelected, direction*num::Vec3(0, 0, spd*window->getDeltaTime()));
+}
+
+void TEST_insertVertex()
+{
+    if (objectSelected.lastSelected == -1)
+        return;
+
+    cube.insertVertex(objectSelected.lastSelected);
 }

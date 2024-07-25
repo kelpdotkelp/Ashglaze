@@ -29,8 +29,6 @@ namespace geo
             const static int cubeEBOFaceData[6*6];//Two triangles (6 vertices) per face (6 faces)
             const static int cubeEBOEdgeData[2*18];//18 edges, 2 vertices per edge
 
-            bool m_isSelected = false;
-
             unsigned int        meshVBO;
             unsigned int        meshVAO;
             std::vector<float>  meshVBOData;
@@ -56,6 +54,10 @@ namespace geo
 
             void translateVertex(unsigned int vertexID, num::Vec3 transAmount);
 
+            void generateVerticesVBOData();
+            void generateEdgesVBOData();
+            void generateFacesVBOData();
+
         public:
             Object3D(BasePrimitives type);
             Object3D();
@@ -65,6 +67,7 @@ namespace geo
             void renderEdges();
 
             void translateGeoFeature(unsigned int geoID, num::Vec3 transAmount);
+            void insertVertex(unsigned int geoID);
 
             std::string toString();
     };

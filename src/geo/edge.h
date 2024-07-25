@@ -8,11 +8,13 @@
 namespace geo
 {
     class Vertex;
+    class Face;
 
     class Edge : public ModelObject
     {
         private:
             std::vector<Vertex *> vertices;
+            std::vector<Face *> faces;
 
             unsigned int VBOIndex;//Where this edge is in its VBO
         
