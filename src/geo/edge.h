@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "modelObject.h"
+#include "num/num.h"
 
 namespace geo
 {
@@ -26,6 +27,8 @@ namespace geo
             Edge(Vertex* v1, Vertex* v2);
 
             std::vector<Vertex*> getVertices();
+
+            num::Vec3 getMidpoint();
 
             std::string toString();
     };

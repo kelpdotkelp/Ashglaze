@@ -189,16 +189,7 @@ namespace geo
             }
         }
 
-        //Update VBO data on GPU
-        glBindVertexArray(verticesVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, verticesVBO);
-        glBufferData(GL_ARRAY_BUFFER, verticesVBOData.size()*sizeof(float), verticesVBOData.data(), GL_DYNAMIC_DRAW);
-        glBindVertexArray(edgesVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, edgesVBO);
-        glBufferData(GL_ARRAY_BUFFER, edgesVBOData.size()*sizeof(float), edgesVBOData.data(), GL_DYNAMIC_DRAW);
-        glBindVertexArray(meshVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, meshVBO);
-        glBufferData(GL_ARRAY_BUFFER, meshVBOData.size()*sizeof(float), meshVBOData.data(), GL_DYNAMIC_DRAW);
+        sendVBOToGPU();
     }
 
     void Object3D::translateGeoFeature(unsigned int geoID, num::Vec3 transAmount)
@@ -225,11 +216,80 @@ namespace geo
         Edge* selectedEdge = dynamic_cast<Edge*>(ModelObject::masterObjectMapGet(geoID));
         if (selectedEdge != nullptr)//Attempting to insert a vertex along an edge
         {
+            //Create new geometry features
+            num::Vec3 midpoint = selectedEdge->getMidpoint();
+            vertices.emplace_back(midpoint.x, midpoint.y, midpoint.z);
+            Vertex* newVertex = &vertices.back();
+            //These are the 2 edges the the original splits into
+            edges.emplace_back(newVertex, selectedEdge->vertices[0]);
+            Edge* newEdgeBreak0 = &edges.back();
+            edges.emplace_back(newVertex, selectedEdge->vertices[1]);
+            Edge* newEdgeBreak1 = &edges.back();
+
+            //Keep track of new edges, faces to finish their setup
+            std::list<Edge*> newEdges;
+            std::list<Face*> newFaces;
+
             for (int i=0; i<2; i++)//An edge only ever has 2 faces
             {
-                unsigned int thirdVertex = selectedEdge->faces[i]->getThirdVertex(
+                Face* face = selectedEdge->faces[i];
+                //Vertex of face not contained in the selected edge
+                unsigned int thirdVertex = face->getThirdVertex(
                     selectedEdge->vertices[0]->getID(), selectedEdge->vertices[1]->getID());
+                Vertex* thirdVertexPtr = dynamic_cast<Vertex*>(ModelObject::masterObjectMapGet(thirdVertex));
+
+                //Edge that splits the new face
+                edges.emplace_back(newVertex, thirdVertexPtr);
+                newEdges.emplace_back(&edges.back());
+
+                //Each face on the edge must split into two faces
+                faces.emplace_back(newVertex, thirdVertexPtr, selectedEdge->vertices[0]);
+                //Associate new face with its edges
+                faces.back().addEdge(newEdgeBreak0);//Since newEdgeBreak0 was created using selectedEdge->vertices[0]
+                faces.back().addEdge(&edges.back());//New edge that splits the original face
+                //Last edge is between thirdVertexPtr and selectedEdge->vertices[0]
+                unsigned int vertexID0 = thirdVertexPtr->getID();
+                unsigned int vertexID1 = selectedEdge->vertices[0]->getID();
+                for(auto iter = face->edges.begin(); iter != face->edges.end(); iter++)
+                {
+                    
+                }
+
+                newFaces.emplace_back(&faces.back());
+
+                faces.emplace_back(selectedEdge->vertices[1], thirdVertexPtr, newVertex);
+                newFaces.emplace_back(&faces.back());
+
+                //Remove old geometry features
+                ModelObject::masterObjectMapDelete(face->getID());//Remove the face from masterObjectMap
+                for (auto iter = faces.begin(); iter != faces.end();)//Remove the face from Object3D faces list
+                {
+                    if(iter->getID() == face->getID())
+                    {
+                        iter = faces.erase(iter);
+                        break;
+                    }
+                    else
+                        iter++;
+                }
             }
+
+            ModelObject::masterObjectMapDelete(selectedEdge->getID());//Remove the edge from masterObjectMap
+            for (auto iter = edges.begin(); iter != edges.end();)//Remove the edge from Object3D edges list
+            {
+                if (iter->getID() == geoID)
+                {
+                    iter = edges.erase(iter);
+                    break;
+                }
+                else
+                    iter++;
+            }
+
+            generateVerticesVBOData();
+            generateEdgesVBOData();
+            generateFacesVBOData();
+            sendVBOToGPU();
         }
     }
 
@@ -288,6 +348,8 @@ namespace geo
 
     void Object3D::generateFacesVBOData()
     {
+        meshVBOData.clear();//Remove list contents
+
         unsigned int VBOIndex = 0;
         num::Vec3 pos;
         num::Vec3 normal;
@@ -309,6 +371,20 @@ namespace geo
             face.VBOIndex = 3*meshVBOStride*VBOIndex;
             VBOIndex++;
         }
+    }
+
+    void Object3D::sendVBOToGPU()
+    {
+        //Update VBO data on GPU
+        glBindVertexArray(verticesVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, verticesVBO);
+        glBufferData(GL_ARRAY_BUFFER, verticesVBOData.size()*sizeof(float), verticesVBOData.data(), GL_DYNAMIC_DRAW);
+        glBindVertexArray(edgesVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, edgesVBO);
+        glBufferData(GL_ARRAY_BUFFER, edgesVBOData.size()*sizeof(float), edgesVBOData.data(), GL_DYNAMIC_DRAW);
+        glBindVertexArray(meshVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, meshVBO);
+        glBufferData(GL_ARRAY_BUFFER, meshVBOData.size()*sizeof(float), meshVBOData.data(), GL_DYNAMIC_DRAW);
     }
 
     const float Object3D::cubeVertexPosData[] = {

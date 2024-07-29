@@ -16,6 +16,11 @@ namespace geo
         v3->faces.emplace_back(this);
     }
 
+    Face::Face(Edge* e1, Edge* e2, Edge* e3): ModelObject(this)
+    {
+        
+    }
+
     std::vector<Vertex*> Face::getVertices() {return vertices;}
     std::vector<Edge*> Face::getEdges() {return edges;}
 

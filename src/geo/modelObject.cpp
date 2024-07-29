@@ -32,11 +32,10 @@ namespace geo
     std::string ModelObject::masterObjectMapToString()
     {
         std::string out = "";
-        for (int i = 0; i < masterObjectMap.size(); i++)
+        for (auto iter = masterObjectMap.begin(); iter != masterObjectMap.end(); iter++)
         {
-            out += masterObjectMap.at(i)->toString();
-            if (i != masterObjectMap.size()-1)
-                out += "\n";
+            out += iter->second->toString();
+            out += "\n";
         }
 
         return out;

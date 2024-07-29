@@ -57,6 +57,7 @@ namespace geo
             void generateVerticesVBOData();
             void generateEdgesVBOData();
             void generateFacesVBOData();
+            void sendVBOToGPU();
 
         public:
             Object3D(BasePrimitives type);

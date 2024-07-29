@@ -25,6 +25,7 @@ namespace geo
             friend class Edge;
 
             Face(Vertex* v1, Vertex* v2, Vertex* v3);
+            Face(Edge* e1, Edge* e2, Edge* e3);
 
             std::vector<Vertex*> getVertices();
             std::vector<Edge*> getEdges();

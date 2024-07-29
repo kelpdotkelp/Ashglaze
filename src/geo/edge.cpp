@@ -16,6 +16,12 @@ namespace geo
 
     std::vector<Vertex*> Edge::getVertices() {return vertices;}
 
+    num::Vec3 Edge::getMidpoint()
+    {
+        return num::Vec3((vertices[0]->position.x + vertices[1]->position.x)*0.5f,
+            (vertices[0]->position.y + vertices[1]->position.y)*0.5f, (vertices[0]->position.z + vertices[1]->position.z)*0.5f);
+    }
+
     std::string Edge::toString()
     {
         std::string IDString = "";
