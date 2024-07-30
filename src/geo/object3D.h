@@ -63,6 +63,9 @@ namespace geo
             Edge* addEdgeObject(Vertex* v1, Vertex* v2);
             Face* addFaceObject(Vertex* v1, Vertex* v2, Vertex* v3,
                 Edge* e1 = nullptr, Edge* e2 = nullptr, Edge* e3 = nullptr);
+
+            void deleteEdgeObject(Edge* edge);
+            void deleteFaceObject(Face* face);
     
             Edge* edgeExists(Vertex* v1, Vertex* v2);
             void associateEdgeWithFace(Edge* edge, Face* face);

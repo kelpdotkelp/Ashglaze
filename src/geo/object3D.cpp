@@ -217,157 +217,32 @@ namespace geo
                 //This constructor associates edges with their faces
                 //Winding order is the same as original face but the new vertex replaces the vertex that is not
                 //used by the new split face.
-
-                //Get index of original face vertex that is NOT thirdVertex or vertex0
-
-                int unusedVertexIndex = 0;
-                for (auto v: originalFace->windingOrder)
+                for (auto selectedEdgeVertex: selectedEdge->vertices)//For the two new faces that are created
                 {
-                    if (v != thirdVertex && v != selectedEdge->vertex0())
-                        break;
-                    unusedVertexIndex++;
-                }
-                std::vector<Vertex*> newWinding = originalFace->windingOrder;
-                newWinding[unusedVertexIndex] = newVertex;
-
-                Face* newFace0 = addFaceObject(newWinding[0], newWinding[1], newWinding[2], 
-                    edgeExists(newVertex, selectedEdge->vertex0()), edgeThatSplitsFace, edgeExists(thirdVertex, selectedEdge->vertex0()));
-
-                ///DUPLICATED CODE FOR OTHER NEW FACE!!!!
-                unusedVertexIndex = 0;
-                for (auto v: originalFace->windingOrder)
-                {
-                    if (v != thirdVertex && v != selectedEdge->vertex1())
-                        break;
-                    unusedVertexIndex++;
-                }
-                newWinding = originalFace->windingOrder;
-                newWinding[unusedVertexIndex] = newVertex;
-
-                Face* newFace1 = addFaceObject(newWinding[0], newWinding[1], newWinding[2], 
-                    edgeExists(newVertex, selectedEdge->vertex1()), edgeThatSplitsFace, edgeExists(thirdVertex, selectedEdge->vertex1()));
-
-                ModelObject::masterObjectMapDelete(originalFace->getID());//Remove the face from masterObjectMap
-                for (auto iter = faces.begin(); iter != faces.end();)//Remove the face from Object3D faces list
-                {
-                    if(iter->getID() == originalFace->getID())
+                    //Get index of original face vertex that is NOT thirdVertex or vertex0
+                    int unusedVertexIndex = 0;
+                    for (auto v: originalFace->windingOrder)
                     {
-                        iter = faces.erase(iter);
-                        break;
+                        if (v != thirdVertex && v != selectedEdgeVertex)
+                            break;
+                        unusedVertexIndex++;
                     }
-                    else
-                        iter++;
+                    std::vector<Vertex*> newWinding = originalFace->windingOrder;
+                    newWinding[unusedVertexIndex] = newVertex;
+
+                    Face* newFace0 = addFaceObject(newWinding[0], newWinding[1], newWinding[2], 
+                        edgeExists(newVertex, selectedEdgeVertex), edgeThatSplitsFace, edgeExists(thirdVertex, selectedEdgeVertex));
                 }
+
+                deleteFaceObject(originalFace);
             }
 
-            ModelObject::masterObjectMapDelete(selectedEdge->getID());//Remove the edge from masterObjectMap
-            for (auto iter = edges.begin(); iter != edges.end();)//Remove the edge from Object3D edges list
-            {
-                if (iter->getID() == geoID)
-                {
-                    iter = edges.erase(iter);
-                    break;
-                }
-                else
-                    iter++;
-            }
+            deleteEdgeObject(selectedEdge);
 
             generateVerticesVBOData();
             generateEdgesVBOData();
             generateFacesVBOData();
             sendVBOToGPU();
-
-            /*
-            //Create new geometry features
-            num::Vec3 midpoint = selectedEdge->getMidpoint();
-            vertices.emplace_back(midpoint.x, midpoint.y, midpoint.z);
-            Vertex* newVertex = &vertices.back();
-            //These are the 2 edges the the original splits into
-            edges.emplace_back(newVertex, selectedEdge->vertex0());
-            Edge* newEdgeBreak0 = &edges.back();
-            edges.emplace_back(newVertex, selectedEdge->vertex1());
-            Edge* newEdgeBreak1 = &edges.back();
-
-            for (auto face: selectedEdge->faces)//An edge only ever has 2 faces
-            {
-                //Vertex of face not contained in the selected edge
-                Vertex* thirdVertex = face->getThirdVertex(selectedEdge->vertex0(), selectedEdge->vertex1());
-                edges.emplace_back(newVertex, thirdVertex);//Edge that splits the new face
-
-                //Each face on the edge must split into two faces
-                faces.emplace_back(newVertex, thirdVertex, selectedEdge->vertex0());
-                //Associate new face with its edges
-                faces.back().edges.insert(newEdgeBreak0);//Since newEdgeBreak0 was created using selectedEdge->vertices[0]
-                newEdgeBreak0->faces.insert(&faces.back());
-                faces.back().edges.insert(&edges.back());//New edge that splits the original face
-                //Last edge is between thirdVertex and selectedEdge->vertex0()
-                for(auto curEdge = face->edges.begin(); curEdge != face->edges.end(); curEdge++)
-                {
-                    if ((*curEdge)->vertices.find(thirdVertex) != (*curEdge)->vertices.end() &&
-                        (*curEdge)->vertices.find(selectedEdge->vertex0()) != (*curEdge)->vertices.end())
-                    {
-                        faces.back().edges.insert(*curEdge);
-                        (*curEdge)->faces.insert(&faces.back());
-                        (*curEdge)->faces.erase(face);
-                    }
-                }
-
-                edges.back().faces.insert(&faces.back());
-
-                //Repeat this process for the other new sub-divided face
-                faces.emplace_back(newVertex, selectedEdge->vertex1(), thirdVertex);
-                faces.back().edges.insert(newEdgeBreak1);
-                newEdgeBreak1->faces.insert(&faces.back());
-                faces.back().edges.insert(&edges.back());//New edge that splits the original face
-                //Last edge is between thirdVertex and selectedEdge->vertex0()
-                for(auto curEdge = face->edges.begin(); curEdge != face->edges.end(); curEdge++)
-                {
-                    if ((*curEdge)->vertices.find(thirdVertex) != (*curEdge)->vertices.end() &&
-                        (*curEdge)->vertices.find(selectedEdge->vertex1()) != (*curEdge)->vertices.end())
-                    {
-                        faces.back().edges.insert(*curEdge);
-                        (*curEdge)->faces.insert(&faces.back());
-                        (*curEdge)->faces.erase(face);
-                    }
-                }
-
-                edges.back().faces.insert(&faces.back());
-
-                //Update thirdVertex associations
-                thirdVertex->edges.insert(&edges.back());
-                thirdVertex->faces.erase(face);
-
-                //Remove old geometry features
-                ModelObject::masterObjectMapDelete(face->getID());//Remove the face from masterObjectMap
-                for (auto iter = faces.begin(); iter != faces.end();)//Remove the face from Object3D faces list
-                {
-                    if(iter->getID() == face->getID())
-                    {
-                        iter = faces.erase(iter);
-                        break;
-                    }
-                    else
-                        iter++;
-                }
-            }
-
-            ModelObject::masterObjectMapDelete(selectedEdge->getID());//Remove the edge from masterObjectMap
-            for (auto iter = edges.begin(); iter != edges.end();)//Remove the edge from Object3D edges list
-            {
-                if (iter->getID() == geoID)
-                {
-                    iter = edges.erase(iter);
-                    break;
-                }
-                else
-                    iter++;
-            }
-
-            generateVerticesVBOData();
-            generateEdgesVBOData();
-            generateFacesVBOData();
-            sendVBOToGPU();
-            */
         }
     }
 
@@ -488,6 +363,36 @@ namespace geo
         else
             faces.emplace_back(v1, v2, v3, e1, e2, e3);
         return &faces.back();
+    }
+
+    void Object3D::deleteEdgeObject(Edge* edge)
+    {
+        ModelObject::masterObjectMapDelete(edge->getID());//Remove the edge from masterObjectMap
+        for (auto iter = edges.begin(); iter != edges.end();)//Remove the edge from Object3D edges list
+        {
+            if (iter->getID() == edge->getID())
+            {
+                iter = edges.erase(iter);
+                break;
+            }
+            else
+                iter++;
+        }
+    }
+
+    void Object3D::deleteFaceObject(Face* face)
+    {
+        ModelObject::masterObjectMapDelete(face->getID());//Remove the edge from masterObjectMap
+        for (auto iter = faces.begin(); iter != faces.end();)//Remove the edge from Object3D edges list
+        {
+            if (iter->getID() == face->getID())
+            {
+                iter = faces.erase(iter);
+                break;
+            }
+            else
+                iter++;
+        }
     }
 
     Edge* Object3D::edgeExists(Vertex* v1, Vertex* v2)
