@@ -24,7 +24,8 @@
         ->  unbind left mouse click in fly mode, add erasure functions to inputManager.
         ->  add zoom on scroll wheel.
         ->  forward declare all classes that only use pointers
-        ->  make vertices always render on top
+        ->  make vertices always render on top (just render vertices when face is selected, with no depth testing)
+        ->  Object3D store vertices, edges, faces, as an unordered_set for fast lookup/insertion/deletion
 
         Lines need to be rendered as quads (use geometry shader?) since OpenGL doesnt require glLineWidth > 1.
 

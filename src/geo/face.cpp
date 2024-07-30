@@ -2,6 +2,7 @@
 
 namespace geo
 {
+    //This constructor is used to generate faces from hardcoded data.
     Face::Face(Vertex* v1, Vertex* v2, Vertex* v3): ModelObject(this)
     {
         vertices.insert(v1);
@@ -18,9 +19,39 @@ namespace geo
         windingOrder.emplace_back(v3);
     }
 
-    Face::Face(Edge* e1, Edge* e2, Edge* e3): ModelObject(this)
+    Face::Face(Vertex* v1, Vertex* v2, Vertex* v3, Edge* e1, Edge* e2, Edge* e3): ModelObject(this)
     {
-        
+        vertices.insert(v1);
+        vertices.insert(v2);
+        vertices.insert(v3);
+        v1->faces.insert(this);
+        v2->faces.insert(this);
+        v3->faces.insert(this);
+
+        windingOrder.reserve(3);
+        windingOrder.emplace_back(v1);
+        windingOrder.emplace_back(v2);
+        windingOrder.emplace_back(v3);
+
+        edges.insert(e1);
+        edges.insert(e2);
+        edges.insert(e3);
+        e1->faces.insert(this);
+        e2->faces.insert(this);
+        e3->faces.insert(this);
+    }
+
+    Face::~Face()
+    {
+        //All vertices and edges that reference this face must delete their reference
+        for(auto vertex: vertices)
+        {
+            vertex->faces.erase(this);
+        }
+        for(auto edge: edges)
+        {
+            edge->faces.erase(this);
+        }
     }
 
     std::vector<Vertex*> Face::getWindingOrder() {return windingOrder;}
@@ -61,12 +92,6 @@ namespace geo
         }
         return thirdVertex;
     }
-
-    /*void Face::addEdge(Edge* edge)
-    {
-        edges.emplace_back(edge);
-        edge->faces.emplace_back(this);
-    }*/
 
     std::string Face::toString()
     {

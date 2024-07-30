@@ -26,6 +26,7 @@ namespace geo
             friend class Face;
 
             Edge(Vertex* v1, Vertex* v2);
+            ~Edge();
 
             std::unordered_set<Vertex*> getVertices();
 

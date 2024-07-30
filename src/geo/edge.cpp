@@ -13,6 +13,19 @@ namespace geo
         v2->edges.insert(this);
     }
 
+    Edge::~Edge()
+    {
+        //All vertices and faces that reference this edge must delete their reference
+        for(auto vertex: vertices)
+        {
+            vertex->edges.erase(this);
+        }
+        for(auto face: faces)
+        {
+            face->edges.erase(this);
+        }
+    }
+
     std::unordered_set<Vertex*> Edge::getVertices() {return vertices;}
 
     Vertex* Edge::vertex0() {return *vertices.begin();}

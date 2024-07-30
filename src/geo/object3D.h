@@ -5,6 +5,7 @@
 
 #include <list>
 #include <vector>
+#include <utility>
 #include <unordered_map>
 
 #include "edge.h"
@@ -26,8 +27,7 @@ namespace geo
             //Store basic vertex and index information for
             //Some fundamental primitives.
             const static float cubeVertexPosData[3*8];
-            const static int cubeEBOFaceData[6*6];//Two triangles (6 vertices) per face (6 faces)
-            const static int cubeEBOEdgeData[2*18];//18 edges, 2 vertices per edge
+            const static int cubeFaceData[6*6];//Two triangles (6 vertices) per face (6 faces)
 
             unsigned int        meshVBO;
             unsigned int        meshVAO;
@@ -52,13 +52,20 @@ namespace geo
             std::list<Face>   faces;
             std::list<Edge>   edges;
 
-            void translateVertex(unsigned int vertexID, num::Vec3 transAmount);
+            void translateVertex(Vertex* vertex, num::Vec3 transAmount);
 
             void generateVerticesVBOData();
             void generateEdgesVBOData();
             void generateFacesVBOData();
             void sendVBOToGPU();
 
+            Vertex* addVertexObject(num::Vec3 position);
+            Edge* addEdgeObject(Vertex* v1, Vertex* v2);
+            Face* addFaceObject(Vertex* v1, Vertex* v2, Vertex* v3,
+                Edge* e1 = nullptr, Edge* e2 = nullptr, Edge* e3 = nullptr);
+    
+            Edge* edgeExists(Vertex* v1, Vertex* v2);
+            void associateEdgeWithFace(Edge* edge, Face* face);
         public:
             Object3D(BasePrimitives type);
             Object3D();
