@@ -1,6 +1,7 @@
 #ifndef FACE_H
 #define FACE_H
 
+#include <unordered_set>
 #include <vector>
 
 #include "edge.h"
@@ -14,8 +15,9 @@ namespace geo
     class Face : public ModelObject
     {
         private:
-            std::vector<Vertex*> vertices;
-            std::vector<Edge*> edges;
+            std::unordered_set<Vertex*> vertices;
+            std::unordered_set<Edge*> edges;
+            std::vector<Vertex*> windingOrder;
 
             unsigned int VBOIndex;//Where this face is in its VBO
 
@@ -27,13 +29,16 @@ namespace geo
             Face(Vertex* v1, Vertex* v2, Vertex* v3);
             Face(Edge* e1, Edge* e2, Edge* e3);
 
-            std::vector<Vertex*> getVertices();
-            std::vector<Edge*> getEdges();
+            std::vector<Vertex*> getWindingOrder();
 
-            void addEdge(Edge* edge);
+            Edge* edge0();
+            Edge* edge1();
+            Edge* edge2();
+
+            //void addEdge(Edge* edge);
 
             num::Vec3 getNormal();
-            unsigned int getThirdVertex(unsigned int vertex0ID, unsigned int vertex1ID);
+            Vertex* getThirdVertex(Vertex* vertex0ID, Vertex* vertex1ID);
 
             std::string toString();
     };

@@ -205,8 +205,7 @@ void mainRender(bool renderIDMode)
         geo::Face* f = dynamic_cast<geo::Face*>(geo::ModelObject::masterObjectMapGet(objectSelected.face));
         if (f != nullptr)
         {
-            std::vector<geo::Edge*> e = f->getEdges();
-            spEdge.setVec3("IDToRender", e[0]->getID(), e[1]->getID(), e[2]->getID());
+            spEdge.setVec3("IDToRender", f->edge0()->getID(), f->edge1()->getID(), f->edge2()->getID());
         }
         else
         {

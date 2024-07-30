@@ -1,7 +1,7 @@
 #ifndef VERTEX_H
 #define VERTEX_H
 
-#include <list>
+#include <unordered_set>
 
 #include "modelObject.h"
 #include "object3D.h"
@@ -15,8 +15,8 @@ namespace geo
     {
         private:
             num::Vec3 position;
-            std::list<Edge*> edges;
-            std::list<Face*> faces;
+            std::unordered_set<Edge*> edges;
+            std::unordered_set<Face*> faces;
 
             unsigned int VBOIndex;//Where this vertex is in its VBO
 

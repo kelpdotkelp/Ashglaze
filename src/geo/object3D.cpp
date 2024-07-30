@@ -35,6 +35,14 @@ namespace geo
                 tempVertexMap.insert({i, vertices.back().getID()});
             }
 
+            //Generate edges and associate them with correct vertices
+            for (int i=0; i<18; i++)//Total number of edges
+            {
+                edges.emplace_back(
+                    dynamic_cast<Vertex*>(ModelObject::masterObjectMapGet(tempVertexMap[cubeEBOEdgeData[i*2]])),
+                    dynamic_cast<Vertex*>(ModelObject::masterObjectMapGet(tempVertexMap[cubeEBOEdgeData[i*2 + 1]])));
+            }
+
             //Generate faces and associate them with correct vertices
             for (int i=0; i<12; i++)//6 faces, 2 triangles per face
             {
@@ -45,16 +53,8 @@ namespace geo
                     dynamic_cast<Vertex*>(ModelObject::masterObjectMapGet(tempVertexMap[cubeEBOFaceData[i*3 + 2]])));
             }
 
-            //Generate edges and associate them with correct vertices
-            for (int i=0; i<18; i++)//Total number of edges
-            {
-                edges.emplace_back(
-                    dynamic_cast<Vertex*>(ModelObject::masterObjectMapGet(tempVertexMap[cubeEBOEdgeData[i*2]])),
-                    dynamic_cast<Vertex*>(ModelObject::masterObjectMapGet(tempVertexMap[cubeEBOEdgeData[i*2 + 1]])));
-            }
-
             //Associate faces with their edges
-            for (auto& edge: edges)
+            /*for (auto& edge: edges)
             {
                 std::vector<Vertex*> edgeV = edge.getVertices();
 
@@ -71,6 +71,21 @@ namespace geo
                     {
                         face.addEdge(&edge);
                     }
+                }
+            }*/
+
+            //Associate faces with their edges
+            for (auto& edge: edges)
+            {
+                Face& face = *(faces.begin());
+                for (auto& face: faces)
+                {
+                    if (face.vertices.find(edge.vertex0()) != face.vertices.end() &&
+                        face.vertices.find(edge.vertex1()) != face.vertices.end())
+                        {
+                            edge.faces.insert(&face);
+                            face.edges.insert(&edge);
+                        }
                 }
             }
         }
@@ -151,9 +166,9 @@ namespace geo
         for(auto edgeBelongingTo: vertex->edges)
         {
             unsigned int whichVertex = 0;// = 1*edgesVBOStride (offset) if second edge vertex must update
-            if (edgeBelongingTo->vertices[0]->getID() == vertex->getID())
+            if (edgeBelongingTo->vertex0()->getID() == vertex->getID())
                 whichVertex = 0;
-            else if (edgeBelongingTo->vertices[1]->getID() == vertex->getID())
+            else if (edgeBelongingTo->vertex1()->getID() == vertex->getID())
                 whichVertex = edgesVBOStride;
             //***IMPORTANT*** offset VBOIndex by 1 because first value is ID! 
             edgesVBOData[edgeBelongingTo->VBOIndex+1 + whichVertex] = vertex->position.x;
@@ -164,11 +179,10 @@ namespace geo
         //Update facesVBOData
         for (auto faceBelongingTo: vertex->faces)
         {
-
             unsigned int whichVertex = 0;// = (1 or 2)*meshVBOStride
             for (int i=0; i<3; i++)
             {
-                if (faceBelongingTo->vertices[i]->getID() == vertex->getID())
+                if (faceBelongingTo->getWindingOrder()[i]->getID() == vertex->getID())
                 {
                     whichVertex = i*meshVBOStride;
                     break;
@@ -194,25 +208,32 @@ namespace geo
 
     void Object3D::translateGeoFeature(unsigned int geoID, num::Vec3 transAmount)
     {
+        
         if(dynamic_cast<Vertex*>(ModelObject::masterObjectMapGet(geoID)) != nullptr)
+        {
             translateVertex(geoID, transAmount);
+            return;
+        }
         Edge* e = dynamic_cast<Edge*>(ModelObject::masterObjectMapGet(geoID));
         if(e != nullptr)
         {
-            translateVertex(e->vertices[0]->getID(), transAmount);
-            translateVertex(e->vertices[1]->getID(), transAmount);
+            translateVertex(e->vertex0()->getID(), transAmount);
+            translateVertex(e->vertex1()->getID(), transAmount);
+            return;
         }
         Face* f = dynamic_cast<Face*>(ModelObject::masterObjectMapGet(geoID));   
         if(f != nullptr)
         {
-            translateVertex(f->vertices[0]->getID(), transAmount);
-            translateVertex(f->vertices[1]->getID(), transAmount);
-            translateVertex(f->vertices[2]->getID(), transAmount);
+            translateVertex(f->getWindingOrder()[0]->getID(), transAmount);
+            translateVertex(f->getWindingOrder()[1]->getID(), transAmount);
+            translateVertex(f->getWindingOrder()[2]->getID(), transAmount);
+            return;
         }   
     }
 
     void Object3D::insertVertex(unsigned int geoID)
     {
+        /*
         Edge* selectedEdge = dynamic_cast<Edge*>(ModelObject::masterObjectMapGet(geoID));
         if (selectedEdge != nullptr)//Attempting to insert a vertex along an edge
         {
@@ -291,6 +312,7 @@ namespace geo
             generateFacesVBOData();
             sendVBOToGPU();
         }
+        */
     }
 
     std::string Object3D::toString()
@@ -331,14 +353,17 @@ namespace geo
         num::Vec3 pos;
         for (auto& edge: edges)
         {
-            for (int i=0; i<2; i++)
-            {
-                edgesVBOData.push_back((float)edge.getID());
-                pos = edge.getVertices()[i]->getPos();
-                edgesVBOData.push_back(pos.x);
-                edgesVBOData.push_back(pos.y);
-                edgesVBOData.push_back(pos.z);
-            }
+            edgesVBOData.push_back((float)edge.getID());
+            pos = edge.vertex0()->getPos();
+            edgesVBOData.push_back(pos.x);
+            edgesVBOData.push_back(pos.y);
+            edgesVBOData.push_back(pos.z);
+
+            edgesVBOData.push_back((float)edge.getID());
+            pos = edge.vertex1()->getPos();
+            edgesVBOData.push_back(pos.x);
+            edgesVBOData.push_back(pos.y);
+            edgesVBOData.push_back(pos.z);
 
             edge.VBOIndex = 2*edgesVBOStride*VBOIndex;
             VBOIndex++;
@@ -358,7 +383,7 @@ namespace geo
             for (int i=0; i<3; i++)
             {
                 meshVBOData.push_back((float)face.getID());
-                pos = face.getVertices()[i]->getPos();
+                pos = face.getWindingOrder()[i]->getPos();
                 meshVBOData.push_back(pos.x);
                 meshVBOData.push_back(pos.y);
                 meshVBOData.push_back(pos.z);

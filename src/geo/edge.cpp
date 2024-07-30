@@ -6,26 +6,41 @@ namespace geo
 {
     Edge::Edge(Vertex* v1, Vertex* v2): ModelObject(this)
     {
-        vertices.reserve(2);//Ensures vector doesnt reallocate and invalidate references
-        vertices.push_back(v1);
-        vertices.push_back(v2);
+        vertices.insert(v1);
+        vertices.insert(v2);
 
-        v1->edges.emplace_back(this);
-        v2->edges.emplace_back(this);
+        v1->edges.insert(this);
+        v2->edges.insert(this);
     }
 
-    std::vector<Vertex*> Edge::getVertices() {return vertices;}
+    std::unordered_set<Vertex*> Edge::getVertices() {return vertices;}
+
+    Vertex* Edge::vertex0() {return *vertices.begin();}
+    Vertex* Edge::vertex1() 
+    {
+        auto iter = vertices.begin();
+        iter++;
+        return *(iter);
+    }
 
     num::Vec3 Edge::getMidpoint()
     {
-        return num::Vec3((vertices[0]->position.x + vertices[1]->position.x)*0.5f,
-            (vertices[0]->position.y + vertices[1]->position.y)*0.5f, (vertices[0]->position.z + vertices[1]->position.z)*0.5f);
+        num::Vec3 midpoint = num::Vec3(0.0f, 0.0f, 0.0f);
+        for (auto vertex = vertices.begin(); vertex != vertices.end(); vertex++)
+        {
+            midpoint = midpoint + num::Vec3((*vertex)->position.x, (*vertex)->position.y, (*vertex)->position.z);
+        }
+
+        return 0.5f*midpoint;
     }
 
     std::string Edge::toString()
     {
         std::string IDString = "";
-        for (int i=0; i<2; i++) {IDString += std::to_string(vertices[i]->getID());}
+        for (auto vertex = vertices.begin(); vertex != vertices.end(); vertex++)
+        {
+            IDString += std::to_string((*vertex)->getID());
+        }
 
         std::string outStr = "<ID=";
         if (getID() < 10)
