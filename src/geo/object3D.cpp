@@ -208,6 +208,12 @@ namespace geo
             Edge* newEdgeBreak1 = addEdgeObject(newVertex, selectedEdge->vertex1());
             //The faces for newVertex, newEdgeBreak0, newEdgeBreak1 have not been set.
 
+            //Get original faces
+            auto faceIter = selectedEdge->faces.begin();
+            Face* oldFace0 = *faceIter;
+            faceIter++;
+            Face* oldFace1 = *faceIter;
+
             for (auto originalFace: selectedEdge->faces)//An edge only ever has 2 faces
             {
                 //Vertex of face not contained in the selected edge
@@ -233,10 +239,10 @@ namespace geo
                     Face* newFace0 = addFaceObject(newWinding[0], newWinding[1], newWinding[2], 
                         edgeExists(newVertex, selectedEdgeVertex), edgeThatSplitsFace, edgeExists(thirdVertex, selectedEdgeVertex));
                 }
-
-                deleteFaceObject(originalFace);
             }
 
+            deleteFaceObject(oldFace0);
+            deleteFaceObject(oldFace1);
             deleteEdgeObject(selectedEdge);
 
             generateVerticesVBOData();
