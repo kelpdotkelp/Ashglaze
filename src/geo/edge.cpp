@@ -1,6 +1,7 @@
 #include "edge.h"
 
 #include "vertex.h"
+#include "face.h"
 
 namespace geo
 {
@@ -46,6 +47,10 @@ namespace geo
 
         return 0.5f*midpoint;
     }
+
+    unsigned int Edge::getVBOIndex() {return VBOIndex;}
+
+    void Edge::setVBOIndex(unsigned int VBOIndex) {this->VBOIndex = VBOIndex;}
 
     std::string Edge::toString()
     {

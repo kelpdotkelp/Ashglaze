@@ -4,11 +4,11 @@
 #include <unordered_set>
 
 #include "modelObject.h"
-#include "object3D.h"
 #include "num/num.h"
 
 namespace geo
 {
+    class Edge;
     class Face;
 
     class Vertex : public ModelObject
@@ -31,6 +31,9 @@ namespace geo
             std::string toString() final;
 
             num::Vec3 getPos() const;
+            unsigned int getVBOIndex();
+
+            void setVBOIndex(unsigned int VBOIndex);
     };
 }
 

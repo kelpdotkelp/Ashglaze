@@ -1,4 +1,7 @@
 #include "face.h"
+#include "edge.h"
+#include "vertex.h"
+
 
 namespace geo
 {
@@ -92,6 +95,10 @@ namespace geo
         }
         return thirdVertex;
     }
+
+    unsigned int Face::getVBOIndex() {return VBOIndex;}
+
+    void Face::setVBOIndex(unsigned int VBOIndex) {this->VBOIndex = VBOIndex;}
 
     std::string Face::toString()
     {

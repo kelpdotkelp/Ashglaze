@@ -25,4 +25,7 @@ namespace geo
     }
 
     num::Vec3 Vertex::getPos() const {return position;}
+    unsigned int Vertex::getVBOIndex() {return VBOIndex;}
+
+    void Vertex::setVBOIndex(unsigned int VBOIndex) {this->VBOIndex = VBOIndex;}
 }

@@ -4,13 +4,14 @@
 #include <unordered_set>
 #include <iterator>
 
-#include "modelObject.h"
 #include "num/num.h"
+#include "modelObject.h"
 
 namespace geo
 {
     class Vertex;
     class Face;
+    class Object3D;
 
     class Edge : public ModelObject
     {
@@ -34,6 +35,9 @@ namespace geo
             Vertex* vertex1();
 
             num::Vec3 getMidpoint();
+            unsigned int getVBOIndex();
+
+            void setVBOIndex(unsigned int VBOIndex);
 
             std::string toString();
     };

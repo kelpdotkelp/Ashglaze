@@ -4,14 +4,16 @@
 #include <unordered_set>
 #include <vector>
 
-#include "edge.h"
 #include "modelObject.h"
-#include "object3D.h"
-#include "vertex.h"
 #include "num/num.h"
+
 
 namespace geo
 {
+        
+    class Edge;
+    class Vertex;
+
     class Face : public ModelObject
     {
         private:
@@ -38,6 +40,9 @@ namespace geo
 
             num::Vec3 getNormal();
             Vertex* getThirdVertex(Vertex* vertex0ID, Vertex* vertex1ID);
+            unsigned int getVBOIndex();
+
+            void setVBOIndex(unsigned int VBOIndex);
 
             std::string toString();
     };

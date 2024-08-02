@@ -26,6 +26,7 @@
         ->  forward declare all classes that only use pointers
         ->  make vertices always render on top (just render vertices when face is selected, with no depth testing)
         ->  Object3D store vertices, edges, faces, as an unordered_set for fast lookup/insertion/deletion
+        ->  GLData make vertexLength static
 
         Lines need to be rendered as quads (use geometry shader?) since OpenGL doesnt require glLineWidth > 1.
 

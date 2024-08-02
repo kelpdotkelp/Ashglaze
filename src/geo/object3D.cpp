@@ -9,14 +9,12 @@ namespace geo
 
     Object3D::Object3D(BasePrimitives type): ModelObject(this)
     {
-        glGenBuffers(1, &meshVBO);
-        glGenVertexArrays(1, &meshVAO);
-
-        glGenBuffers(1, &verticesVBO);
-        glGenVertexArrays(1, &verticesVAO);
-
-        glGenBuffers(1, &edgesVBO);
-        glGenVertexArrays(1, &edgesVAO);
+        verticesGL = GLDataVertex(4);
+        verticesGL.generateGLObjects();
+        edgesGL = GLDataEdge(4);
+        edgesGL.generateGLObjects();
+        facesGL = GLDataFace(7);
+        facesGL.generateGLObjects();
 
         if (type == BasePrimitives::CUBE)
         {
@@ -57,89 +55,40 @@ namespace geo
             }
         }
 
-        //Populate VBOs
-        generateVerticesVBOData();
-        generateEdgesVBOData();
-        generateFacesVBOData();
+        verticesGL.generateVBOData(&vertices);
+        edgesGL.generateVBOData(&edges);
+        facesGL.generateVBOData(&faces);
 
-        //Mesh
-        glBindVertexArray(meshVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, meshVBO);
-        glBufferData(GL_ARRAY_BUFFER, meshVBOData.size()*sizeof(float), meshVBOData.data(), GL_DYNAMIC_DRAW);
-        //ID
-        glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, meshVBOStride*sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-        //Position
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, meshVBOStride*sizeof(float), (void*)(sizeof(float)));
-        glEnableVertexAttribArray(1);
-        //Normal
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, meshVBOStride*sizeof(float), (void*)(4*sizeof(float)));
-        glEnableVertexAttribArray(2);
+        verticesGL.configureGLVertexAttribs();
+        edgesGL.configureGLVertexAttribs();
+        facesGL.configureGLVertexAttribs();
 
-        //Vertices
-        glBindVertexArray(verticesVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, verticesVBO);
-        glBufferData(GL_ARRAY_BUFFER, verticesVBOData.size()*sizeof(float), verticesVBOData.data(), GL_DYNAMIC_DRAW);
-        //ID
-        glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, verticesVBOStride*sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-        //Position
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, verticesVBOStride*sizeof(float), (void*)(sizeof(float)));
-        glEnableVertexAttribArray(1);
-
-        //Edges
-        glBindVertexArray(edgesVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, edgesVBO);
-        glBufferData(GL_ARRAY_BUFFER, edgesVBOData.size()*sizeof(float), edgesVBOData.data(), GL_DYNAMIC_DRAW);
-        //ID
-        glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, edgesVBOStride*sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-        //Position
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, edgesVBOStride*sizeof(float), (void*)(sizeof(float)));
-        glEnableVertexAttribArray(1);
+        verticesGL.sendDataToGPU();
+        edgesGL.sendDataToGPU();
+        facesGL.sendDataToGPU();
     }
 
-    void Object3D::renderMesh()
-    {
-        glBindVertexArray(meshVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3*faces.size());
-    }
-
-    void Object3D::renderVertices()
-    {
-        glBindVertexArray(verticesVAO);
-        glDrawArrays(GL_POINTS, 0, vertices.size());
-    }
-
-    void Object3D::renderEdges()
-    {
-        glBindVertexArray(edgesVAO);
-        glDrawArrays(GL_LINES, 0, 18*edges.size());
-    }
+    void Object3D::renderMesh() {facesGL.render();}
+    void Object3D::renderVertices() {verticesGL.render();}
+    void Object3D::renderEdges() {edgesGL.render();}
 
     void Object3D::translateVertex(Vertex* vertex, num::Vec3 transAmount)
     {
         //Vertex translation
         vertex->position = vertex->position + transAmount;
         //Update all VBOs with new vertex position
-        //Update verticesVBOData
+        //vertex->VBOIndex is the index that vertex starts in the VBO array
         //***IMPORTANT*** offset VBOIndex by 1 because first value is ID! 
-        verticesVBOData[vertex->VBOIndex+1] = vertex->position.x;
-        verticesVBOData[vertex->VBOIndex+2] = vertex->position.y;
-        verticesVBOData[vertex->VBOIndex+3] = vertex->position.z;
+        verticesGL.setPos(vertex->VBOIndex, vertex->position);
 
         //Update edgesVBOData
         for(auto edgeBelongingTo: vertex->edges)
         {
-            unsigned int whichVertex = 0;// = 1*edgesVBOStride (offset) if second edge vertex must update
+            // = 1*edgesVBOStride (offset) if second edge vertex must update
             if (edgeBelongingTo->vertex0() == vertex)
-                whichVertex = 0;
+                edgesGL.setPos(edgeBelongingTo->VBOIndex, vertex->position, 0);
             else if (edgeBelongingTo->vertex1() == vertex)
-                whichVertex = edgesVBOStride;
-            //***IMPORTANT*** offset VBOIndex by 1 because first value is ID! 
-            edgesVBOData[edgeBelongingTo->VBOIndex+1 + whichVertex] = vertex->position.x;
-            edgesVBOData[edgeBelongingTo->VBOIndex+2 + whichVertex] = vertex->position.y;
-            edgesVBOData[edgeBelongingTo->VBOIndex+3 + whichVertex] = vertex->position.z;
+                edgesGL.setPos(edgeBelongingTo->VBOIndex, vertex->position, 1);
         }
 
         //Update facesVBOData
@@ -150,26 +99,19 @@ namespace geo
             {
                 if (faceBelongingTo->getWindingOrder()[i] == vertex)
                 {
-                    whichVertex = i*meshVBOStride;
+                    facesGL.setPos(faceBelongingTo->VBOIndex, vertex->position, i);
                     break;
                 }
             }
-            //***IMPORTANT*** offset VBOIndex by 1 because first value is ID! 
-            meshVBOData[faceBelongingTo->VBOIndex+1 + whichVertex] = vertex->position.x;
-            meshVBOData[faceBelongingTo->VBOIndex+2 + whichVertex] = vertex->position.y;
-            meshVBOData[faceBelongingTo->VBOIndex+3 + whichVertex] = vertex->position.z;
 
             //Update surface normals
             num::Vec3 normal = faceBelongingTo->getNormal();
-            for (int i=0; i<3; i++)
-            {
-                meshVBOData[faceBelongingTo->VBOIndex+4 + i*meshVBOStride] = normal.x;
-                meshVBOData[faceBelongingTo->VBOIndex+5 + i*meshVBOStride] = normal.y;
-                meshVBOData[faceBelongingTo->VBOIndex+6 + i*meshVBOStride] = normal.z;
-            }
+            facesGL.setNormal(faceBelongingTo->VBOIndex, faceBelongingTo->getNormal());
         }
 
-        sendVBOToGPU();
+        verticesGL.sendDataToGPU();
+        edgesGL.sendDataToGPU();
+        facesGL.sendDataToGPU();
     }
 
     void Object3D::translateGeoFeature(unsigned int geoID, num::Vec3 transAmount)
@@ -245,10 +187,12 @@ namespace geo
             deleteFaceObject(oldFace1);
             deleteEdgeObject(selectedEdge);
 
-            generateVerticesVBOData();
-            generateEdgesVBOData();
-            generateFacesVBOData();
-            sendVBOToGPU();
+            verticesGL.generateVBOData(&vertices);
+            edgesGL.generateVBOData(&edges);
+            facesGL.generateVBOData(&faces);
+            verticesGL.sendDataToGPU();
+            edgesGL.sendDataToGPU();
+            facesGL.sendDataToGPU();
         }
     }
 
@@ -261,92 +205,6 @@ namespace geo
             outStr += "0";
 
         return outStr + std::to_string(getID()) + " Object3D" + ">";
-    }
-
-    void Object3D::generateVerticesVBOData()
-    {
-        verticesVBOData.clear();//Remove list contents
-
-        unsigned int VBOIndex = 0;
-        num::Vec3 pos;
-        for (auto& vertex: vertices)
-        {
-            verticesVBOData.push_back((float)vertex.getID());
-            pos = vertex.getPos();
-            verticesVBOData.push_back(pos.x);
-            verticesVBOData.push_back(pos.y);
-            verticesVBOData.push_back(pos.z);
-
-            vertex.VBOIndex = verticesVBOStride*VBOIndex;
-            VBOIndex++;
-        }
-    }
-
-    void Object3D::generateEdgesVBOData()
-    {
-        edgesVBOData.clear();//Remove list contents
-
-        unsigned int VBOIndex = 0;
-        num::Vec3 pos;
-        for (auto& edge: edges)
-        {
-            edgesVBOData.push_back((float)edge.getID());
-            pos = edge.vertex0()->getPos();
-            edgesVBOData.push_back(pos.x);
-            edgesVBOData.push_back(pos.y);
-            edgesVBOData.push_back(pos.z);
-
-            edgesVBOData.push_back((float)edge.getID());
-            pos = edge.vertex1()->getPos();
-            edgesVBOData.push_back(pos.x);
-            edgesVBOData.push_back(pos.y);
-            edgesVBOData.push_back(pos.z);
-
-            edge.VBOIndex = 2*edgesVBOStride*VBOIndex;
-            VBOIndex++;
-        }
-
-    }
-
-    void Object3D::generateFacesVBOData()
-    {
-        meshVBOData.clear();//Remove list contents
-
-        unsigned int VBOIndex = 0;
-        num::Vec3 pos;
-        num::Vec3 normal;
-        for (auto& face: faces)
-        {
-            for (int i=0; i<3; i++)
-            {
-                meshVBOData.push_back((float)face.getID());
-                pos = face.getWindingOrder()[i]->getPos();
-                meshVBOData.push_back(pos.x);
-                meshVBOData.push_back(pos.y);
-                meshVBOData.push_back(pos.z);
-                normal = face.getNormal();
-                meshVBOData.push_back(normal.x);
-                meshVBOData.push_back(normal.y);
-                meshVBOData.push_back(normal.z);
-            }
-
-            face.VBOIndex = 3*meshVBOStride*VBOIndex;
-            VBOIndex++;
-        }
-    }
-
-    void Object3D::sendVBOToGPU()
-    {
-        //Update VBO data on GPU
-        glBindVertexArray(verticesVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, verticesVBO);
-        glBufferData(GL_ARRAY_BUFFER, verticesVBOData.size()*sizeof(float), verticesVBOData.data(), GL_DYNAMIC_DRAW);
-        glBindVertexArray(edgesVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, edgesVBO);
-        glBufferData(GL_ARRAY_BUFFER, edgesVBOData.size()*sizeof(float), edgesVBOData.data(), GL_DYNAMIC_DRAW);
-        glBindVertexArray(meshVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, meshVBO);
-        glBufferData(GL_ARRAY_BUFFER, meshVBOData.size()*sizeof(float), meshVBOData.data(), GL_DYNAMIC_DRAW);
     }
 
     Vertex* Object3D::addVertexObject(num::Vec3 position)
