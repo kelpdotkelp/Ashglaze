@@ -11,8 +11,9 @@ namespace geo
     class GLDataEdge: public GLData
     {
         public:
+            static unsigned int vertexLength;
+
             GLDataEdge();
-            GLDataEdge(unsigned int vertexLength);
 
             void generateVBOData(std::list<Edge>* edges);
 

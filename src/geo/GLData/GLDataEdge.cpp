@@ -2,10 +2,10 @@
 
 namespace geo
 {
-    GLDataEdge::GLDataEdge() : GLData() {}
+    unsigned int GLDataEdge::vertexLength = 4;
 
-    GLDataEdge::GLDataEdge(unsigned int vertexLength) 
-        : GLData(vertexLength, GL_LINES) {}
+    GLDataEdge::GLDataEdge() 
+        : GLData(GLDataEdge::vertexLength, GL_LINES) {}
 
     void GLDataEdge::generateVBOData(std::list<Edge>* edges)
     {

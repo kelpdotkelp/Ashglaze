@@ -4,10 +4,10 @@
 
 namespace geo
 {
-    GLDataFace::GLDataFace() : GLData() {}
+    unsigned int GLDataFace::vertexLength = 7;
 
-    GLDataFace::GLDataFace(unsigned int vertexLength) :
-        GLData(vertexLength, GL_TRIANGLES) {}
+    GLDataFace::GLDataFace() :
+        GLData(GLDataFace::vertexLength, GL_TRIANGLES) {}
 
     void GLDataFace::generateVBOData(std::list<Face>* faces)
     {

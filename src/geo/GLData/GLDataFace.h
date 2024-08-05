@@ -11,8 +11,9 @@ namespace geo
     class GLDataFace: public GLData
     {
         public:
+            static unsigned int vertexLength;
+
             GLDataFace();
-            GLDataFace(unsigned int vertexLength);
 
             void generateVBOData(std::list<Face>* faces);
 

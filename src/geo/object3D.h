@@ -50,9 +50,10 @@ namespace geo
 
             void deleteEdgeObject(Edge* edge);
             void deleteFaceObject(Face* face);
-    
+
             Edge* edgeExists(Vertex* v1, Vertex* v2);
             void associateEdgeWithFace(Edge* edge, Face* face);
+            void generateAndSendVBOsToGPU();
         public:
             Object3D(BasePrimitives type);
             Object3D();

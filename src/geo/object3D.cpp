@@ -9,11 +9,8 @@ namespace geo
 
     Object3D::Object3D(BasePrimitives type): ModelObject(this)
     {
-        verticesGL = GLDataVertex(4);
         verticesGL.generateGLObjects();
-        edgesGL = GLDataEdge(4);
         edgesGL.generateGLObjects();
-        facesGL = GLDataFace(7);
         facesGL.generateGLObjects();
 
         if (type == BasePrimitives::CUBE)
@@ -55,17 +52,11 @@ namespace geo
             }
         }
 
-        verticesGL.generateVBOData(&vertices);
-        edgesGL.generateVBOData(&edges);
-        facesGL.generateVBOData(&faces);
-
         verticesGL.configureGLVertexAttribs();
         edgesGL.configureGLVertexAttribs();
         facesGL.configureGLVertexAttribs();
 
-        verticesGL.sendDataToGPU();
-        edgesGL.sendDataToGPU();
-        facesGL.sendDataToGPU();
+        generateAndSendVBOsToGPU();
     }
 
     void Object3D::renderMesh() {facesGL.render();}
@@ -187,12 +178,7 @@ namespace geo
             deleteFaceObject(oldFace1);
             deleteEdgeObject(selectedEdge);
 
-            verticesGL.generateVBOData(&vertices);
-            edgesGL.generateVBOData(&edges);
-            facesGL.generateVBOData(&faces);
-            verticesGL.sendDataToGPU();
-            edgesGL.sendDataToGPU();
-            facesGL.sendDataToGPU();
+            generateAndSendVBOsToGPU();
         }
     }
 
@@ -273,6 +259,16 @@ namespace geo
     {
         edge->faces.insert(face);
         face->edges.insert(edge);
+    }
+
+    void Object3D::generateAndSendVBOsToGPU()
+    {
+        verticesGL.generateVBOData(&vertices);
+        edgesGL.generateVBOData(&edges);
+        facesGL.generateVBOData(&faces);
+        verticesGL.sendDataToGPU();
+        edgesGL.sendDataToGPU();
+        facesGL.sendDataToGPU();
     }
 
     const float Object3D::cubeVertexPosData[] = {

@@ -3,10 +3,10 @@
 
 namespace geo
 {
-    GLDataVertex::GLDataVertex() : GLData() {}
+    unsigned int GLDataVertex::vertexLength = 4;
 
-    GLDataVertex::GLDataVertex(unsigned int vertexLength) :
-        GLData(vertexLength, GL_POINTS) {}
+    GLDataVertex::GLDataVertex() :
+        GLData(GLDataVertex::vertexLength, GL_POINTS) {}
 
     void GLDataVertex::configureGLVertexAttribs()
     {

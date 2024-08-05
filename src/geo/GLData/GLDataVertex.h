@@ -11,8 +11,9 @@ namespace geo
     class GLDataVertex : public GLData
     {
         public:
+            static unsigned int vertexLength;
+
             GLDataVertex();
-            GLDataVertex(unsigned int vertexLength);
 
             void generateVBOData(std::list<Vertex>* vertices);
 
