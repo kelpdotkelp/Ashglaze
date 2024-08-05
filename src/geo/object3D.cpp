@@ -13,43 +13,9 @@ namespace geo
         edgesGL.generateGLObjects();
         facesGL.generateGLObjects();
 
-        if (type == BasePrimitives::CUBE)
+        switch (type)
         {
-            //This is a mapping so the EBO array maps to created vertex IDs
-            //It is only used to associate the new vertices with faces.
-            std::unordered_map<int, int> tempVertexMap;
-
-            //Generate vertices
-            for (int i=0; i<8; i++)
-            {
-                //Insert a new vertex into the list
-                vertices.emplace_back(
-                    cubeVertexPosData[i*3],
-                    cubeVertexPosData[i*3 + 1],
-                    cubeVertexPosData[i*3 + 2]);
-                tempVertexMap.insert({i, vertices.back().getID()});
-            }
-
-            //Generate faces and associate them with correct vertices and edges
-            for (int i=0; i<12; i++)//6 faces, 2 triangles per face
-            {
-                //Retrieve EBO index, map that index to masterObjectID, retrieve corresponding vertex.
-                Vertex* v1 = dynamic_cast<Vertex*>(ModelObject::masterObjectMapGet(tempVertexMap[cubeFaceData[i*3]]));
-                Vertex* v2 = dynamic_cast<Vertex*>(ModelObject::masterObjectMapGet(tempVertexMap[cubeFaceData[i*3 + 1]]));
-                Vertex* v3 = dynamic_cast<Vertex*>(ModelObject::masterObjectMapGet(tempVertexMap[cubeFaceData[i*3 + 2]]));
-                faces.emplace_back(v1, v2, v3);
-
-                //Construct the needed edges
-                std::list< std::pair<Vertex*, Vertex*> > vertexPairs = {{v1, v2}, {v1, v3}, {v2, v3}};
-                for (auto item: vertexPairs)
-                {
-                    Edge* edgeToUse = edgeExists(item.first, item.second);
-                    if (edgeToUse == nullptr)
-                        edgeToUse = addEdgeObject(item.first, item.second);
-
-                    associateEdgeWithFace(edgeToUse, &faces.back());
-                }      
-            }
+            case BasePrimitives::CUBE: DefaultGeoGenerator::generateCube(this); break;
         }
 
         verticesGL.configureGLVertexAttribs();
@@ -270,37 +236,4 @@ namespace geo
         edgesGL.sendDataToGPU();
         facesGL.sendDataToGPU();
     }
-
-    const float Object3D::cubeVertexPosData[] = {
-        -0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f,  0.5f,
-        -0.5f, -0.5f,  0.5f,
-        -0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
-    };
-
-    //Remember that index order specifies the winding.
-    const int Object3D::cubeFaceData[] =
-    {
-        0, 2, 3,
-        0, 1, 2,
-
-        7, 6, 4,
-        6, 5, 4,
-
-        0, 4, 5,
-        5, 1, 0,
-
-        0, 7, 4,
-        0, 3, 7,
-
-        3, 2, 6,
-        6, 7, 3,
-
-        5, 6, 2,
-        2, 1, 5,
-    };
 }

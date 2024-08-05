@@ -16,22 +16,15 @@
 #include "GLData/GLDataVertex.h"
 #include "GLData/GLDataEdge.h"
 #include "GLData/GLDataFace.h"
+#include "object3DDefaultGeo.h"
 
 namespace geo
 {
-    enum class BasePrimitives
-    {
-        CUBE
-    };
-
     class Object3D : public ModelObject
     {
-        private:
-            //Store basic vertex and index information for
-            //Some fundamental primitives.
-            const static float cubeVertexPosData[3*8];
-            const static int cubeFaceData[6*6];//Two triangles (6 vertices) per face (6 faces)
+        friend class DefaultGeoGenerator;
 
+        private:
             GLDataVertex verticesGL;
             GLDataEdge   edgesGL;
             GLDataFace   facesGL;

@@ -9,6 +9,7 @@ add_library(geo STATIC
     GLData/GLDataVertex.cpp
     modelObject.cpp
     object3D.cpp
+    object3DDefaultGeo.cpp
     vertex.cpp
 )
 

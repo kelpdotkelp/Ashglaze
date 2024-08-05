@@ -26,14 +26,8 @@
         ->  forward declare all classes that only use pointers
         ->  make vertices always render on top (just render vertices when face is selected, with no depth testing)
         ->  Object3D store vertices, edges, faces, as an unordered_set for fast lookup/insertion/deletion
-        ->  GLData make vertexLength static
 
         Lines need to be rendered as quads (use geometry shader?) since OpenGL doesnt require glLineWidth > 1.
-
-        Maybe? Although this might be too much memory
-        Vertices should reference which edges/faces it belongs to
-        Edges should reference which vertices it has and faces it belongs to
-        Faces should reference which edges and vertices it has
 */
 
 int initWindowWidth = 800;
