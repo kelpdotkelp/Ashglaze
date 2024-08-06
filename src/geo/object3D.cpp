@@ -7,7 +7,7 @@ namespace geo
 
     }
 
-    Object3D::Object3D(BasePrimitives type): ModelObject(this)
+    Object3D::Object3D(BasePrimitives type, int recursionDepth): ModelObject(this)
     {
         verticesGL.generateGLObjects();
         edgesGL.generateGLObjects();
@@ -16,6 +16,8 @@ namespace geo
         switch (type)
         {
             case BasePrimitives::CUBE: DefaultGeoGenerator::generateCube(this); break;
+            case BasePrimitives::OCTAHEDRON: DefaultGeoGenerator::generateOctahedron(this); break;
+            case BasePrimitives::SPHERE: DefaultGeoGenerator::generateSphere(this, recursionDepth); break;
         }
 
         verticesGL.configureGLVertexAttribs();

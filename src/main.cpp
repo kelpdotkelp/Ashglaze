@@ -27,6 +27,8 @@
         ->  make vertices always render on top (just render vertices when face is selected, with no depth testing)
         ->  Object3D store vertices, edges, faces, as an unordered_set for fast lookup/insertion/deletion
 
+        -> Euler characteristic for error checking?
+
         Lines need to be rendered as quads (use geometry shader?) since OpenGL doesnt require glLineWidth > 1.
 */
 
@@ -64,7 +66,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = new Window("Clay", initWindowWidth, initWindowHeight);
+    window = new Window("Stoneware3D", initWindowWidth, initWindowHeight);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_PROGRAM_POINT_SIZE);
 

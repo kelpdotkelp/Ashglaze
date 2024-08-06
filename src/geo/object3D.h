@@ -48,7 +48,7 @@ namespace geo
             void associateEdgeWithFace(Edge* edge, Face* face);
             void generateAndSendVBOsToGPU();
         public:
-            Object3D(BasePrimitives type);
+            Object3D(BasePrimitives type, int recursionDepth=1);
             Object3D();
 
             void renderMesh();
