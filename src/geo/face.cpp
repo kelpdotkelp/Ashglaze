@@ -105,7 +105,7 @@ namespace geo
         std::string IDString = "";
         for (int i=0; i<3; i++) 
         {
-            IDString += std::to_string(windingOrder[i]->getID());
+            IDString += std::to_string(windingOrder[i]->getID()) + " ";
         }
 
         std::string outStr = "<ID=";

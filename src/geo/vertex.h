@@ -24,6 +24,7 @@ namespace geo
             friend class Object3D;
             friend class Edge;
             friend class Face;
+            friend class DefaultGeoGenerator;
 
             Vertex();
             Vertex(float x, float y, float z);

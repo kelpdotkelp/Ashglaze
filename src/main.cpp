@@ -19,7 +19,6 @@
 #include "input/key.h"
 
 /*      TODO
-        ->  use a queue system for nextAvailableID in modelObject.
         ->  make directional light a class that configures appropriate shaders.
         ->  unbind left mouse click in fly mode, add erasure functions to inputManager.
         ->  add zoom on scroll wheel.
@@ -28,6 +27,8 @@
         ->  Object3D store vertices, edges, faces, as an unordered_set for fast lookup/insertion/deletion
 
         -> Euler characteristic for error checking?
+
+        ->Crashing sometimes when hitting Q to exit window
 
         Lines need to be rendered as quads (use geometry shader?) since OpenGL doesnt require glLineWidth > 1.
 */
@@ -119,7 +120,7 @@ int main()
     spEdge.setVec3("color", 0.0f, 0.0f, 1.0f);
     spEdge.setVec3("selectedColor", 0.0f, 1.0f, 0.0f);
 
-    cube = geo::Object3D(geo::BasePrimitives::CUBE);
+    cube = geo::Object3D(geo::BasePrimitives::SPHERE, 3);
 
     camera.setPos(0.0, 0.0, 0.0);
 
@@ -229,7 +230,10 @@ void onObjectSelect()
     num::Vec2 mousePos = num::Vec2(inputManager.getMousePosX(), inputManager.getMousePosY());
     glFinish();
     glReadPixels(mousePos.x, window->getHeight() - mousePos.y, 1, 1, GL_RGB, GL_FLOAT, &pixels);
-    unsigned int selectedObjectID = pixels[0]*256 + pixels[1]*256*256 + pixels[2] * 256*256*256;
+    //Converting from float RGB ID back to integer ID:
+    //  Multiplication by 256 corresponds to bit shifting left by 8
+    //  Multiplication by 255 undoes the mapping for a colour 0-255 to 0.0-1.0.
+    unsigned int selectedObjectID = pixels[0]*255 + (pixels[1]*256)*255 + (pixels[2] * 256*256)*255;
 
     if (geo::ModelObject::masterObjectMapGet(selectedObjectID) == nullptr)
     {

@@ -57,7 +57,7 @@ namespace geo
         std::string IDString = "";
         for (auto vertex = vertices.begin(); vertex != vertices.end(); vertex++)
         {
-            IDString += std::to_string((*vertex)->getID());
+            IDString += std::to_string((*vertex)->getID()) + " ";
         }
 
         std::string outStr = "<ID=";
