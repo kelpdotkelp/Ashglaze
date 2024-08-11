@@ -108,9 +108,12 @@ int main()
     spMesh.setVec3("meshColor", 0.5, 0.5, 0.5);
     spMesh.setVec3("selectedColorChange", 0.2, 0.2, 0.2);
     //Configure directional lighting
-    spMesh.setVec3("directionalLight.direction", 0.4, -0.6, -0.4);
-    spMesh.setVec3("directionalLight.ambient",   0.8,  0.8, 0.8);
-    spMesh.setVec3("directionalLight.diffuse",   1.0,  1.0, 1.0);
+    spMesh.setVec3("directionalLight0.direction", 0.4, -0.6, -0.4);
+    spMesh.setVec3("directionalLight0.ambient",   0.8,  0.8, 0.8);
+    spMesh.setVec3("directionalLight0.diffuse",   1.0,  1.0, 1.0);
+    spMesh.setVec3("directionalLight1.direction", -0.4, 0.6, 0.4);
+    spMesh.setVec3("directionalLight1.ambient",   0.0,  0.0, 0.0);
+    spMesh.setVec3("directionalLight1.diffuse",   0.2,  0.2, 0.2);
 
     spVertex.use();
     spVertex.setVec3("color", 0.0f, 0.0f, 1.0f);
