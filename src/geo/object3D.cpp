@@ -28,7 +28,12 @@ namespace geo
     }
 
     void Object3D::renderMesh() {facesGL.render();}
-    void Object3D::renderVertices() {verticesGL.render();}
+    void Object3D::renderVertices()
+    {
+        glDisable(GL_DEPTH_TEST);
+        verticesGL.render();
+        glEnable(GL_DEPTH_TEST);
+    }
     void Object3D::renderEdges() {edgesGL.render();}
 
     void Object3D::translateVertex(Vertex* vertex, num::Vec3 transAmount)

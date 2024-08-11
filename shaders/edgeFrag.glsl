@@ -15,7 +15,7 @@ void main()
 {
     if ((uint(IDToRender.x) == ID ||
         uint(IDToRender.y) == ID ||
-        uint(IDToRender.z) == ID) && IDToRender.x != -1 && IDToRender.y != -1 && IDToRender.z != -1)
+        uint(IDToRender.z) == ID))
     {
         if (!renderIDMode)//Visual rendering
         {

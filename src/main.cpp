@@ -26,6 +26,8 @@
         ->  make vertices always render on top (just render vertices when face is selected, with no depth testing)
         ->  Object3D store vertices, edges, faces, as an unordered_set for fast lookup/insertion/deletion
 
+        -> Add specular highlights to directional lighting
+
         -> Euler characteristic for error checking?
 
         ->Crashing sometimes when hitting Q to exit window
@@ -123,7 +125,7 @@ int main()
     spEdge.setVec3("color", 0.0f, 0.0f, 1.0f);
     spEdge.setVec3("selectedColor", 0.0f, 1.0f, 0.0f);
 
-    cube = geo::Object3D(geo::BasePrimitives::SPHERE, 3);
+    cube = geo::Object3D(geo::BasePrimitives::SPHERE, 5);
 
     camera.setPos(0.0, 0.0, 0.0);
 
@@ -191,20 +193,12 @@ void mainRender(bool renderIDMode)
 
     if (objectSelected.object == cube.getID())
     {
-        //Render selected vertices
-        spVertex.use();
-        spVertex.setBool("renderIDMode", renderIDMode);
-        spVertex.setInt("selectedID", objectSelected.vertex);//Highlight selected vertex
-        spVertex.setMat4("model", model);
-        spVertex.setMat4("view", view);
-        spVertex.setMat4("projection", projection);
-        cube.renderVertices();
+        geo::Face* f = dynamic_cast<geo::Face*>(geo::ModelObject::masterObjectMapGet(objectSelected.face));
 
         //Render selected Edges
         spEdge.use();
         spEdge.setBool("renderIDMode", renderIDMode);
         spEdge.setInt("selectedID", objectSelected.edge);//Highlight selected vertex
-        geo::Face* f = dynamic_cast<geo::Face*>(geo::ModelObject::masterObjectMapGet(objectSelected.face));
         if (f != nullptr)
         {
             spEdge.setVec3("IDToRender", f->edge0()->getID(), f->edge1()->getID(), f->edge2()->getID());
@@ -218,6 +212,23 @@ void mainRender(bool renderIDMode)
         spEdge.setMat4("projection", projection);
         glLineWidth(12.5);
         cube.renderEdges();
+
+        //Render selected vertices
+        spVertex.use();
+        spVertex.setBool("renderIDMode", renderIDMode);
+        spVertex.setInt("selectedID", objectSelected.vertex);//Highlight selected vertex
+        //Render only the vertices associated with the selected face
+        if (f != nullptr)
+        {
+            spVertex.setVec3("IDToRender", f->getWindingOrder()[0]->getID(), 
+                f->getWindingOrder()[1]->getID(), f->getWindingOrder()[2]->getID());
+        }
+        else
+            spVertex.setVec3("IDToRender", -1, -1, -1);
+        spVertex.setMat4("model", model);
+        spVertex.setMat4("view", view);
+        spVertex.setMat4("projection", projection);
+        cube.renderVertices();
     }
 }
 
@@ -254,7 +265,6 @@ void onObjectSelect()
             {
                 objectSelected.vertex = selectedObjectID;
                 objectSelected.edge = -1;
-                objectSelected.face = -1;
             }
             else if (dynamic_cast<geo::Edge*>(geo::ModelObject::masterObjectMapGet(selectedObjectID)) != nullptr)   
             {
