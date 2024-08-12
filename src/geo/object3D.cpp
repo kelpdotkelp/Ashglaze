@@ -2,6 +2,11 @@
 
 namespace geo
 {
+    /**********************************************************
+     * 
+     * Constructors
+     * 
+    **********************************************************/
     Object3D::Object3D()
     {
 
@@ -27,6 +32,11 @@ namespace geo
         generateAndSendVBOsToGPU();
     }
 
+    /**********************************************************
+     * 
+     * Rendering
+     * 
+    **********************************************************/
     void Object3D::renderMesh() {facesGL.render();}
     void Object3D::renderVertices()
     {
@@ -34,7 +44,42 @@ namespace geo
         verticesGL.render();
         glEnable(GL_DEPTH_TEST);
     }
-    void Object3D::renderEdges() {edgesGL.render();}
+    void Object3D::renderEdges()
+    {
+        glDisable(GL_DEPTH_TEST);
+        edgesGL.render();
+        glEnable(GL_DEPTH_TEST);
+    }
+
+    /**********************************************************
+     * 
+     * Translating vertices, edges, and faces
+     * 
+    **********************************************************/
+    void Object3D::translateGeoFeature(unsigned int geoID, num::Vec3 transAmount)
+    {
+        Vertex* v = dynamic_cast<Vertex*>(ModelObject::masterObjectMapGet(geoID)); 
+        if(v != nullptr)
+        {
+            translateVertex(v, transAmount);
+            return;
+        }
+        Edge* e = dynamic_cast<Edge*>(ModelObject::masterObjectMapGet(geoID));
+        if(e != nullptr)
+        {
+            translateVertex(e->vertex0(), transAmount);
+            translateVertex(e->vertex1(), transAmount);
+            return;
+        }
+        Face* f = dynamic_cast<Face*>(ModelObject::masterObjectMapGet(geoID));   
+        if(f != nullptr)
+        {
+            translateVertex(f->getWindingOrder()[0], transAmount);
+            translateVertex(f->getWindingOrder()[1], transAmount);
+            translateVertex(f->getWindingOrder()[2], transAmount);
+            return;
+        }   
+    }
 
     void Object3D::translateVertex(Vertex* vertex, num::Vec3 transAmount)
     {
@@ -78,94 +123,99 @@ namespace geo
         facesGL.sendDataToGPU();
     }
 
-    void Object3D::translateGeoFeature(unsigned int geoID, num::Vec3 transAmount)
-    {
-        Vertex* v = dynamic_cast<Vertex*>(ModelObject::masterObjectMapGet(geoID)); 
-        if(v != nullptr)
-        {
-            translateVertex(v, transAmount);
-            return;
-        }
-        Edge* e = dynamic_cast<Edge*>(ModelObject::masterObjectMapGet(geoID));
-        if(e != nullptr)
-        {
-            translateVertex(e->vertex0(), transAmount);
-            translateVertex(e->vertex1(), transAmount);
-            return;
-        }
-        Face* f = dynamic_cast<Face*>(ModelObject::masterObjectMapGet(geoID));   
-        if(f != nullptr)
-        {
-            translateVertex(f->getWindingOrder()[0], transAmount);
-            translateVertex(f->getWindingOrder()[1], transAmount);
-            translateVertex(f->getWindingOrder()[2], transAmount);
-            return;
-        }   
-    }
-
+    /**********************************************************
+     * 
+     * Vertex insertion
+     * 
+    **********************************************************/
     void Object3D::insertVertex(unsigned int geoID)
     {
         Edge* selectedEdge = dynamic_cast<Edge*>(ModelObject::masterObjectMapGet(geoID));
         if (selectedEdge != nullptr)//Attempting to insert a vertex along an edge
         {
-            //Split original edge into 2 new edges and 1 new vertex
-            Vertex* newVertex = addVertexObject(selectedEdge->getMidpoint());
-            Edge* newEdgeBreak0 = addEdgeObject(newVertex, selectedEdge->vertex0());
-            Edge* newEdgeBreak1 = addEdgeObject(newVertex, selectedEdge->vertex1());
-            //The faces for newVertex, newEdgeBreak0, newEdgeBreak1 have not been set.
-
-            //Get original faces
-            auto faceIter = selectedEdge->faces.begin();
-            Face* oldFace0 = *faceIter;
-            faceIter++;
-            Face* oldFace1 = *faceIter;
-
-            for (auto originalFace: selectedEdge->faces)//An edge only ever has 2 faces
-            {
-                //Vertex of face not contained in the selected edge
-                Vertex* thirdVertex = originalFace->getThirdVertex(selectedEdge->vertex0(), selectedEdge->vertex1());
-                Edge* edgeThatSplitsFace = addEdgeObject(newVertex, thirdVertex);
-
-                //This constructor associates edges with their faces
-                //Winding order is the same as original face but the new vertex replaces the vertex that is not
-                //used by the new split face.
-                for (auto selectedEdgeVertex: selectedEdge->vertices)//For the two new faces that are created
-                {
-                    //Get index of original face vertex that is NOT thirdVertex or vertex0
-                    int unusedVertexIndex = 0;
-                    for (auto v: originalFace->windingOrder)
-                    {
-                        if (v != thirdVertex && v != selectedEdgeVertex)
-                            break;
-                        unusedVertexIndex++;
-                    }
-                    std::vector<Vertex*> newWinding = originalFace->windingOrder;
-                    newWinding[unusedVertexIndex] = newVertex;
-
-                    Face* newFace0 = addFaceObject(newWinding[0], newWinding[1], newWinding[2], 
-                        edgeExists(newVertex, selectedEdgeVertex), edgeThatSplitsFace, edgeExists(thirdVertex, selectedEdgeVertex));
-                }
-            }
-
-            deleteFaceObject(oldFace0);
-            deleteFaceObject(oldFace1);
-            deleteEdgeObject(selectedEdge);
-
+            insertVertexOnEdge(selectedEdge);
             generateAndSendVBOsToGPU();
+            return;
+        }
+        Face* selectedFace = dynamic_cast<Face*>(ModelObject::masterObjectMapGet(geoID));
+        if (selectedFace != nullptr)
+        {
+            insertVertexOnFace(selectedFace);
+            generateAndSendVBOsToGPU();
+            return;
         }
     }
 
-    std::string Object3D::toString()
+    void Object3D::insertVertexOnFace(Face* selectedFace)
     {
-        std::string outStr = "<ID=";
-        if (getID() < 10)
-            outStr += "00";
-        else if (getID() < 100)
-            outStr += "0";
+        std::vector<Vertex *> windingOrder = selectedFace->getWindingOrder();
 
-        return outStr + std::to_string(getID()) + " Object3D" + ">";
+        //Insert a new vertex at centre of face and three new edges.
+        Vertex* newVertex = addVertexObject(selectedFace->getCentroid());
+        Edge* newEdge0 = addEdgeObject(newVertex, windingOrder[0]);
+        Edge* newEdge1 = addEdgeObject(newVertex, windingOrder[1]);
+        Edge* newEdge2 = addEdgeObject(newVertex, windingOrder[2]);
+        addFaceObject(windingOrder[0], windingOrder[1], newVertex,
+            edgeExists(windingOrder[0], windingOrder[1]), newEdge0, newEdge1);
+        addFaceObject(windingOrder[1], windingOrder[2], newVertex,
+            edgeExists(windingOrder[1], windingOrder[2]), newEdge1, newEdge2);
+        addFaceObject(windingOrder[2], windingOrder[0], newVertex,
+            edgeExists(windingOrder[2], windingOrder[0]), newEdge2, newEdge0);
+
+        deleteFaceObject(selectedFace);
     }
 
+    void Object3D::insertVertexOnEdge(Edge* selectedEdge)
+    {
+        //Split original edge into 2 new edges and 1 new vertex
+        Vertex* newVertex = addVertexObject(selectedEdge->getMidpoint());
+        Edge* newEdgeBreak0 = addEdgeObject(newVertex, selectedEdge->vertex0());
+        Edge* newEdgeBreak1 = addEdgeObject(newVertex, selectedEdge->vertex1());
+        //The faces for newVertex, newEdgeBreak0, newEdgeBreak1 have not been set.
+
+        //Get original faces
+        auto faceIter = selectedEdge->faces.begin();
+        Face* oldFace0 = *faceIter;
+        faceIter++;
+        Face* oldFace1 = *faceIter;
+
+        for (auto originalFace: selectedEdge->faces)//An edge only ever has 2 faces
+        {
+            //Vertex of face not contained in the selected edge
+            Vertex* thirdVertex = originalFace->getThirdVertex(selectedEdge->vertex0(), selectedEdge->vertex1());
+            Edge* edgeThatSplitsFace = addEdgeObject(newVertex, thirdVertex);
+
+            //This constructor associates edges with their faces
+            //Winding order is the same as original face but the new vertex replaces the vertex that is not
+            //used by the new split face.
+            for (auto selectedEdgeVertex: selectedEdge->vertices)//For the two new faces that are created
+            {
+                //Get index of original face vertex that is NOT thirdVertex or vertex0
+                int unusedVertexIndex = 0;
+                for (auto v: originalFace->windingOrder)
+                {
+                    if (v != thirdVertex && v != selectedEdgeVertex)
+                        break;
+                    unusedVertexIndex++;
+                }
+                std::vector<Vertex*> newWinding = originalFace->windingOrder;
+                newWinding[unusedVertexIndex] = newVertex;
+
+                Face* newFace0 = addFaceObject(newWinding[0], newWinding[1], newWinding[2], 
+                    edgeExists(newVertex, selectedEdgeVertex), edgeThatSplitsFace, edgeExists(thirdVertex, selectedEdgeVertex));
+            }
+        }
+
+        deleteFaceObject(oldFace0);
+        deleteFaceObject(oldFace1);
+        deleteEdgeObject(selectedEdge);
+    }
+
+    /**********************************************************
+     * 
+     * Adding and deleting geometry
+     * 
+    **********************************************************/
     Vertex* Object3D::addVertexObject(num::Vec3 position)
     {
         vertices.emplace_back(position.x, position.y, position.z);
@@ -218,6 +268,11 @@ namespace geo
         }
     }
 
+    /**********************************************************
+     * 
+     * Misc.
+     * 
+    **********************************************************/
     Edge* Object3D::edgeExists(Vertex* v1, Vertex* v2)
     {
         for (auto edge: v1->edges)
@@ -242,5 +297,16 @@ namespace geo
         verticesGL.sendDataToGPU();
         edgesGL.sendDataToGPU();
         facesGL.sendDataToGPU();
+    }
+
+    std::string Object3D::toString()
+    {
+        std::string outStr = "<ID=";
+        if (getID() < 10)
+            outStr += "00";
+        else if (getID() < 100)
+            outStr += "0";
+
+        return outStr + std::to_string(getID()) + " Object3D" + ">";
     }
 }

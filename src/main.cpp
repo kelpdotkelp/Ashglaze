@@ -23,7 +23,6 @@
         ->  unbind left mouse click in fly mode, add erasure functions to inputManager.
         ->  add zoom on scroll wheel.
         ->  forward declare all classes that only use pointers
-        ->  make vertices always render on top (just render vertices when face is selected, with no depth testing)
         ->  Object3D store vertices, edges, faces, as an unordered_set for fast lookup/insertion/deletion
 
         -> Add specular highlights to directional lighting
@@ -125,7 +124,7 @@ int main()
     spEdge.setVec3("color", 0.0f, 0.0f, 1.0f);
     spEdge.setVec3("selectedColor", 0.0f, 1.0f, 0.0f);
 
-    cube = geo::Object3D(geo::BasePrimitives::SPHERE, 5);
+    cube = geo::Object3D(geo::BasePrimitives::SPHERE, 3);
 
     camera.setPos(0.0, 0.0, 0.0);
 

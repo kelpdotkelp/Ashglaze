@@ -96,6 +96,16 @@ namespace geo
         return thirdVertex;
     }
 
+    num::Vec3 Face::getCentroid()
+    {
+        num::Vec3 cent = num::Vec3(0.0f, 0.0f, 0.0f);
+        for (auto vertex: vertices)
+        {
+            cent = cent + vertex->position;
+        }
+        return (1.0f/3)*cent;
+    }
+
     unsigned int Face::getVBOIndex() {return VBOIndex;}
 
     void Face::setVBOIndex(unsigned int VBOIndex) {this->VBOIndex = VBOIndex;}

@@ -40,6 +40,7 @@ namespace geo
 
             num::Vec3 getNormal();
             Vertex* getThirdVertex(Vertex* vertex0ID, Vertex* vertex1ID);
+            num::Vec3 getCentroid();
             unsigned int getVBOIndex();
 
             void setVBOIndex(unsigned int VBOIndex);

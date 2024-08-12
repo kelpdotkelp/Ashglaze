@@ -35,6 +35,8 @@ namespace geo
             std::list<Edge>   edges;
 
             void translateVertex(Vertex* vertex, num::Vec3 transAmount);
+            void insertVertexOnEdge(Edge* selectedEdge);
+            void insertVertexOnFace(Face* selectedFace);
 
             Vertex* addVertexObject(num::Vec3 position);
             Edge* addEdgeObject(Vertex* v1, Vertex* v2);
@@ -46,6 +48,7 @@ namespace geo
 
             Edge* edgeExists(Vertex* v1, Vertex* v2);
             void associateEdgeWithFace(Edge* edge, Face* face);
+    
             void generateAndSendVBOsToGPU();
         public:
             Object3D(BasePrimitives type, int recursionDepth=1);
