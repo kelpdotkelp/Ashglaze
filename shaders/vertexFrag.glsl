@@ -7,7 +7,6 @@ uniform int selectedID = -1;//-1 maps to no object selected.
 uniform vec3 selectedColor;
 uniform vec3 IDToRender = vec3(-1, -1, -1);
 
-in float pointSize;
 flat in uint ID;//flat prevents interpolation, every fragment gets the same ID
 
 out vec4 outputColor;

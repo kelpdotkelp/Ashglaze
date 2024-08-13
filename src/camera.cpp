@@ -9,7 +9,6 @@ Camera::Camera(num::Vec2 mousePos)
     Camera::mousePos = mousePos;
 }
 
-#include <iostream>
 void Camera::updateCoordSystem()
 {
     right = (num::crossProduct(up, direction)).normalize();
@@ -31,6 +30,8 @@ num::Mat4 Camera::getViewMatrix() {return num::lookAt(trueUp, direction, right, 
 
 num::Vec3 Camera::getPos() {return position;}
 
+num::Vec3 Camera::getDirection() {return direction;}
+
 void Camera::disable(bool isDisabled)
 {
     if (isDisabled)
@@ -41,8 +42,6 @@ void Camera::disable(bool isDisabled)
     Camera::isDisabled = isDisabled;
 }
 
-
-#include <iostream>
 void Camera::updateDirection(num::Vec2 mousePos)
 {
     if (isDisabled)

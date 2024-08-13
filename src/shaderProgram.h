@@ -12,11 +12,14 @@ class ShaderProgram
         unsigned int ID;
 
         void createShaderProgram(Shader& vertex, Shader& fragment);
+        void createShaderProgram(Shader& vertex, Shader& fragment, Shader& geometry);
+        void linkProgram();
 
     public:
         ShaderProgram() {}
         ShaderProgram(Shader& vertex, Shader& fragment);
         ShaderProgram(std::string vertex, std::string fragment);
+        ShaderProgram(std::string vertex, std::string fragment, std::string geometry);
 
         void use();
 

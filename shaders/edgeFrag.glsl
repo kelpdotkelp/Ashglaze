@@ -7,12 +7,14 @@ uniform int selectedID = -1;//-1 maps to no object selected.
 uniform vec3 selectedColor;
 uniform vec3 IDToRender = vec3(-1, -1, -1);
 
-flat in uint ID;
+flat in uint outID;
 
 out vec4 outputColor;
 
 void main()
 {
+    uint ID = outID;
+
     if ((uint(IDToRender.x) == ID ||
         uint(IDToRender.y) == ID ||
         uint(IDToRender.z) == ID))

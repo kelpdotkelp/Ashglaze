@@ -36,6 +36,7 @@ class Camera
         void disable(bool isDisabled);
 
         num::Vec3 getPos();
+        num::Vec3 getDirection();
 
         void moveForward();
         void moveBackward();

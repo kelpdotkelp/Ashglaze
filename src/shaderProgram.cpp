@@ -14,13 +14,37 @@ ShaderProgram::ShaderProgram(std::string vertex, std::string fragment)
     shaderFragment.deleteShader();
 }
 
+ShaderProgram::ShaderProgram(std::string vertex, std::string fragment, std::string geometry)
+{
+    Shader shaderVertex = Shader(vertex, GL_VERTEX_SHADER);
+    Shader shaderFragment = Shader(fragment, GL_FRAGMENT_SHADER);
+    Shader shaderGeometry = Shader(geometry, GL_GEOMETRY_SHADER);
+    createShaderProgram(shaderVertex, shaderFragment, shaderGeometry);
+    shaderVertex.deleteShader();
+    shaderFragment.deleteShader();
+    shaderGeometry.deleteShader();
+}
+
 void ShaderProgram::createShaderProgram(Shader& vertex, Shader& fragment)
 {
     ID = glCreateProgram();
     glAttachShader(ID, vertex.getID());
     glAttachShader(ID, fragment.getID());
-    glLinkProgram(ID);
+    linkProgram();
+}
 
+void ShaderProgram::createShaderProgram(Shader& vertex, Shader& fragment, Shader& geometry)
+{
+    ID = glCreateProgram();
+    glAttachShader(ID, vertex.getID());
+    glAttachShader(ID, fragment.getID());
+    glAttachShader(ID, geometry.getID());
+    linkProgram();
+}
+
+void ShaderProgram::linkProgram()
+{
+    glLinkProgram(ID);
     int success;
     char infoLog[512];
     glGetProgramiv(ID, GL_LINK_STATUS, &success);

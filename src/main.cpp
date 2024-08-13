@@ -30,8 +30,6 @@
         -> Euler characteristic for error checking?
 
         ->Crashing sometimes when hitting Q to exit window
-
-        Lines need to be rendered as quads (use geometry shader?) since OpenGL doesnt require glLineWidth > 1.
 */
 
 int initWindowWidth = 800;
@@ -102,7 +100,7 @@ int main()
 
     spMesh = ShaderProgram("shaders/meshVert.glsl", "shaders/meshFrag.glsl");
     spVertex = ShaderProgram("shaders/vertexVert.glsl", "shaders/vertexFrag.glsl");
-    spEdge = ShaderProgram("shaders/edgeVert.glsl", "shaders/edgeFrag.glsl");
+    spEdge = ShaderProgram("shaders/edgeVert.glsl", "shaders/edgeFrag.glsl", "shaders/edgeGeom.glsl");
     spWireframe = ShaderProgram("shaders/wireframeVert.glsl", "shaders/wireframeFrag.glsl");
 
     spMesh.use();
@@ -154,7 +152,7 @@ void mainRender(bool renderIDMode)
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    num::Mat4 projection = num::perspective(window->getAspectRatio(), 70, 0.1f, 100.0f);
+    num::Mat4 projection = num::perspective(window->getAspectRatio(), 70, 0.01f, 100.0f);
     num::Mat4 view = camera.getViewMatrix();
 
     num::Mat4 model = num::Mat4();
@@ -196,6 +194,7 @@ void mainRender(bool renderIDMode)
 
         //Render selected Edges
         spEdge.use();
+        spEdge.setVec3("cameraDirection", camera.getDirection());
         spEdge.setBool("renderIDMode", renderIDMode);
         spEdge.setInt("selectedID", objectSelected.edge);//Highlight selected vertex
         if (f != nullptr)
@@ -209,11 +208,11 @@ void mainRender(bool renderIDMode)
         spEdge.setMat4("model", model);
         spEdge.setMat4("view", view);
         spEdge.setMat4("projection", projection);
-        glLineWidth(12.5);
         cube.renderEdges();
 
         //Render selected vertices
         spVertex.use();
+        spVertex.setVec3("cameraPosition", camera.getPos());
         spVertex.setBool("renderIDMode", renderIDMode);
         spVertex.setInt("selectedID", objectSelected.vertex);//Highlight selected vertex
         //Render only the vertices associated with the selected face
