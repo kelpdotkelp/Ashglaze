@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 add_subdirectory(input)
 add_subdirectory(num)
 add_subdirectory(geo)
+add_subdirectory(world)
 
 add_executable(Stoneware3D
     camera.cpp
@@ -22,3 +23,4 @@ target_link_libraries(Stoneware3D PUBLIC glfw)
 target_link_libraries(Stoneware3D PUBLIC num)
 target_link_libraries(Stoneware3D PUBLIC geo)
 target_link_libraries(Stoneware3D PUBLIC input)
+target_link_libraries(Stoneware3D PUBLIC world)

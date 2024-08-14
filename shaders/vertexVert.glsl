@@ -18,7 +18,8 @@ flat out uint ID;//flat prevents interpolation, every fragment gets the same ID
 void main()
 {
     gl_Position = projection * view * model * vec4(position, 1.0);
-    gl_PointSize = max(pointSize - pow(distance(cameraPosition, position), 2), poitnSizeMin);
+    vec3 transformedPos = (model * vec4(position, 1.0)).xyz;
+    gl_PointSize = max(pointSize - pow(distance(cameraPosition, transformedPos), 2), poitnSizeMin);
 
     ID = uint(inID);
 }

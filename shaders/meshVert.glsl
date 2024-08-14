@@ -16,7 +16,7 @@ void main()
     gl_Position = projection * view * model * vec4(position, 1.0);
     //This is to correct for non-uniform scaling of the object,
     //as that would make the normal vector no longer perpendicular to the surface
-    normal = inverse(transpose(mat3(model))) * normalize(inNormal);
+    normal = normalize(inverse(transpose(mat3(model))) * inNormal);
 
     ID = uint(inID);
 }

@@ -18,6 +18,8 @@
 #include "input/inputManager.h"
 #include "input/key.h"
 
+#include "world/world.h"
+
 /*      TODO
         ->  make directional light a class that configures appropriate shaders.
         ->  unbind left mouse click in fly mode, add erasure functions to inputManager.
@@ -49,11 +51,14 @@ ShaderProgram spMesh;
 ShaderProgram spVertex;
 ShaderProgram spEdge;
 ShaderProgram spWireframe;
+ShaderProgram spCoordinateAxis;
 Window* window = nullptr;
 input::InputManager inputManager;
 FramebufferGeoSelect framebufferGeoSelect;
 
 Camera camera(num::Vec2(initWindowWidth/2.0f, initWindowHeight/2.0f));
+
+world::CoordinateAxis coordinateAxis;
 
 //Maintains which Object3D and which edge/vertex/face has been selected. 
 geo::ObjectSelection objectSelected;
@@ -102,11 +107,11 @@ int main()
     spVertex = ShaderProgram("shaders/vertexVert.glsl", "shaders/vertexFrag.glsl");
     spEdge = ShaderProgram("shaders/edgeVert.glsl", "shaders/edgeFrag.glsl", "shaders/edgeGeom.glsl");
     spWireframe = ShaderProgram("shaders/wireframeVert.glsl", "shaders/wireframeFrag.glsl");
+    spCoordinateAxis = ShaderProgram("shaders/coordinateAxisVert.glsl", "shaders/coordinateAxisFrag.glsl");
 
     spMesh.use();
     spMesh.setVec3("meshColor", 0.5, 0.5, 0.5);
     spMesh.setVec3("selectedColorChange", 0.2, 0.2, 0.2);
-    //Configure directional lighting
     spMesh.setVec3("directionalLight0.direction", 0.4, -0.6, -0.4);
     spMesh.setVec3("directionalLight0.ambient",   0.8,  0.8, 0.8);
     spMesh.setVec3("directionalLight0.diffuse",   1.0,  1.0, 1.0);
@@ -123,6 +128,8 @@ int main()
     spEdge.setVec3("selectedColor", 0.0f, 1.0f, 0.0f);
 
     cube = geo::Object3D(geo::BasePrimitives::SPHERE, 3);
+
+    coordinateAxis.setup();
 
     camera.setPos(0.0, 0.0, 0.0);
 
@@ -156,7 +163,7 @@ void mainRender(bool renderIDMode)
     num::Mat4 view = camera.getViewMatrix();
 
     num::Mat4 model = num::Mat4();
-    model = num::translate(model, 0.0f, 0.0f, 0.0f);
+    model = num::scale(model, 4.0f, 4.0f, 4.0f);
 
     //Mesh
     spMesh.use();
@@ -227,6 +234,12 @@ void mainRender(bool renderIDMode)
         spVertex.setMat4("view", view);
         spVertex.setMat4("projection", projection);
         cube.renderVertices();
+    }
+
+    if (!renderIDMode)
+    {
+        spCoordinateAxis.use();
+        coordinateAxis.render(spCoordinateAxis, view, projection);
     }
 }
 

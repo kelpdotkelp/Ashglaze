@@ -4,7 +4,7 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-uniform float lineWidth = 0.01;
+uniform float lineWidth = 0.0075;
 uniform vec3 cameraDirection;
 
 layout (lines) in;
